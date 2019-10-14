@@ -1,0 +1,109 @@
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+
+    <script src="/static/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="/static/ajaxfileupload.js"></script>
+
+    <script type="text/javascript">
+        function drop_table() {
+            if (confirm("确定删除所有数据吗（需要重新创建并导入）")) {
+                $.ajax({
+                    url: "/cgi-bin/droptable.py",
+                    type: "delete",
+                    success: function (result) {
+                        alert(result);
+                    }
+                });
+            }
+        }
+        function create_table() {
+            $.ajax({
+                url: "/cgi-bin/createtable.py",
+                type: "put",
+                success: function (result) {
+                    alert(result);
+                }
+            });
+        }
+
+        function hook_guess_date() {
+            $("#input_excel").change(function(e) {
+                var filename = e.target.files[0].name;
+                console.log(filename);
+                var res = /(\d{4})(\d{2})(\d{2})/.exec(filename);
+                console.log(res);
+                if (res != null) {
+                    var yyyy = res[1];
+                    var mm = res[2];
+                    var dd = res[3];
+                    $("#input_date").val(yyyy + "-" + mm + "-" + dd);
+                }
+            });
+        }
+
+        function import_data() {
+            $("#import_result").empty();
+
+            var filename = $("#input_excel").val();
+            console.log(filename);
+            var filedate = $("#input_date").val();
+            console.log(filedate);
+            if (!filename) {
+                alert("请选择文件");
+                return;
+            }
+            if (!filedate) {
+                alert("请指定日期");
+                return;
+            }
+
+            $.ajaxFileUpload({
+                url: "/cgi-bin/inserthist.py",
+                secureuri: false,
+                fileElementId: "input_excel",
+                dataType: "json",
+                data: { "input_date": filedate },
+                success: function(result, status) {
+                    //alert("成功" + result);
+                    $("#import_result").html('<b>' + result + '</b>')
+                    hook_guess_date();
+                },
+                error: function(result, status, e) {
+                    alert(e);
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+
+    <h1>表操作</h1>
+    <div>
+        <button onclick="drop_table()">删除数据表</button>
+        <button onclick="create_table()">创建数据表</button>
+    </div>
+
+
+    <h1>导入数据</h1>
+    <div>
+        <label for="input_excel">选择Excel文件</label>
+        <input type="file" id="input_excel" name="input_excel" accept=".xls">
+        <br>
+        <label for="input_date">指定日期（请确认正确）</label>
+        <input type="date" id="input_date" name="input_date">
+        <!-- <button onclick="guess_date()">从文件名推测日期</button> -->
+        <br>
+        <button onclick="import_data()">执行导入</button>
+        <div id="import_result"></div>
+
+        <script type="text/javascript">
+            hook_guess_date();
+        </script>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,29 @@
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" type="text/css" href="/static/dataTables.bootstrap4.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/main.css" />
+</head>
+
+<body>
+
+    <div class="stocktable">
+        <table class="table table-stripe" id="stockTable"></table>
+    </div>
+
+    <script type="text/javascript" src="/static/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="/static/popper.min.js"></script>
+    <script type="text/javascript" src="/static/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="/static/dataTables.bootstrap4.min.js"></script>
+    <script type="text/javascript" src="/static/main.js"></script>
+
+    <script type="text/javascript">
+        $.getJSON("/cgi-bin/stocklist.py", register_df_to_table("#stockTable"));
+    </script>
+</body>
+
+</html>

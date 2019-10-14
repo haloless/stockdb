@@ -1,0 +1,207 @@
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+
+    <!-- CSS -->
+    <!-- <link rel="stylesheet" type="text/css"
+        href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/static/main.css" /> -->
+    <link rel="stylesheet" type="text/css" href="/static/dataTables.bootstrap4.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/main.css" />
+
+    <!-- JS -->
+    <!-- <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
+    <script type="text/javascript" src="/static/plotly-latest.min.js"></script>
+    
+    <!-- <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script> -->
+
+    <script type="text/javascript" src="/static/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="/static/popper.min.js"></script>
+    <script type="text/javascript" src="/static/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="/static/dataTables.bootstrap4.min.js"></script>
+
+    <script type="text/javascript" src="/static/main.js"></script>
+
+    <script type="text/javascript">
+        // note this depends on two ids: plot_fields and stock_chart
+        // result = {000001:data1, 600000:data2, ...}
+        function plot_chart(result) {
+            var symbols = [];
+            for (var s in result) { symbols.push(s); }
+            symbols.sort();
+
+            // console.log(result);
+            var traces = [];
+            for (var s = 0; s < symbols.length; s++) {
+                var symbol = symbols[s];
+                var data = result[symbol];
+                console.log(data);
+                var n = data.index.length;
+                var i_today = data.columns.indexOf("Today");
+                var keyopt = $("select#plot_fields").find(":selected");
+                var i_price = data.columns.indexOf(keyopt.val());
+                var xs = new Array(n);
+                var ys = new Array(n);
+                for (var i = 0; i < n; i++) {
+                    xs[i] = data.data[i][i_today];
+                    ys[i] = data.data[i][i_price];
+                }
+                var trace = {
+                    x: xs, y: ys,
+                    type: "scatter",
+                    name: symbol + "/" + keyopt.text()
+                };
+                traces.push(trace);
+            }
+            var layout = {
+                showlegend: true,
+                //legend: { "orientation": "h" },
+                xaxis: {
+                    title: '日期',
+                    type: 'date'
+                }
+            };
+            Plotly.newPlot("stock_chart", traces, layout);
+        }
+
+        // result = {000001:data1, 600000:data2, ...}
+        function add_tables(result) {
+            var symbols = [];
+            for (var s in result) { symbols.push(s); }
+            symbols.sort();
+
+            // clear all tables
+            $("#stock_tables").empty();
+
+            for (var s = 0; s < symbols.length; s++) {
+                var symbol = symbols[s];
+                var data = result[symbol];
+                console.log(symbol);
+                console.log(data);
+
+                // create place for table
+                var table_id = "stock_table" + s;
+                var table_div = $("<div>", {
+                    "class": "/"
+                });
+                
+                table_div.append('<hr><h3>' + symbol + "</h3>");
+                table_div.append('<table class="table table-stripe" id="' + table_id + '"></table>');
+                $("#stock_tables").append(table_div)
+
+                register_df_to_table("#" + table_id)(data);
+            }
+        }
+
+        // bind for current data
+        var g_stock_data = null;
+    </script>
+    
+</head>
+
+<body>
+
+    <div>
+        <!-- 查询 -->
+        <p>股票代码，空格或回车分割</p>
+        <textarea rows="3" cols="20" id="input_symbols">000001 600623</textarea>
+        <div>
+            <label for="input_from_date">起始日期</label>
+            <input type="date" id="input_from_date" value="2019-01-01">
+            <label for="input_to_date">结束日期</label>
+            <input type="date" id="input_to_date" value="2025-01-01">
+            <label for="input_trade_only">只包含常用交易数据</label>
+            <input type="checkbox" id="input_trade_only" checked>
+        </div>
+        <button id="btn_query">query</button>
+    </div>
+
+    <div>
+        <!-- plot area -->
+        <select id="plot_fields">
+            <option value="Price">现价</option>
+            <option value="ClosePrice">昨收</option>
+            <option value="Rise">涨幅%</option>
+            <option value="RiseSpeed">涨速%</option>
+            <option value="SellPrice">卖价</option>
+            <option value="CirculateShares">流通股(亿)</option>
+            <option value="PriceEarnRatio">市盈(动)</option>
+            <option value="Turnover">换手%</option>
+            <option value="RelativeFlow">相对流量%</option>
+            <option value="BulkFlow">大宗流量%</option>
+            <option value="CurrentFlow">现量</option>
+            <option value="NetInflow">净流入</option>
+            <option value="BulkInflow">大宗流入</option>
+            <option value="BetaCoef">贝塔系数</option>
+            <option value="MarketCapital">流通市值(亿)</option>
+            <option value="Volume">成交量(亿)</option>
+            <option value="InflowShare">流入量(亿)</option>
+            <option value="OutflowShare">流出量(亿)</option>
+            <!-- 累计量 -->
+            <option value="cum_Volume">累积成交量(亿)</option>
+            <option value="cum_InflowShare">累积流入量(亿)</option>
+            <option value="cum_OutflowShare">累积流出量(亿)</option>
+        </select>
+        <div id="stock_chart" style="width: 80%"></div>
+    </div>
+
+    <div class="/">
+        <table class="table table-stripe" id="stock_tablex"></table>
+    </div>
+
+    <!-- 动态增加数据表格 -->
+    <div id="stock_tables"></div>
+
+    <script type="text/javascript">
+        // callback for query button
+        $("#btn_query").click(function() {
+            var symbols = $("#input_symbols").val().trim().split(/\s+/);
+            var from_date = $("#input_from_date").val();
+            var to_date = $("#input_to_date").val();
+            var trade_only = $("#input_trade_only").is(":checked");
+            console.log(symbols);
+            console.log(from_date);
+            console.log(to_date);
+            console.log(trade_only);
+            if (symbols.length == 0) return;
+            $.ajax({
+                url: "/cgi-bin/stockhist.py",
+                type: "post",
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify({
+                    "symbols": symbols,
+                    "from_date": from_date,
+                    "to_date": to_date,
+                    "trade_only": trade_only
+                }),
+                success: function (result) {
+                    g_stock_data = result;
+                    plot_chart(g_stock_data["chart"]);
+                    add_tables(g_stock_data["table"]);
+                }
+            });
+        });
+        
+        // replot series on select changed
+        $("select#plot_fields").change(function(e) {
+            plot_chart(g_stock_data["chart"]);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,62 @@
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" type="text/css" href="/static/dataTables.bootstrap4.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap.min.css" />
+
+    <link rel="stylesheet" type="text/css" href="/static/main.css" />
+
+    <!-- jquery and datatable -->
+    <script type="text/javascript" src="/static/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="/static/popper.min.js"></script>
+    <script type="text/javascript" src="/static/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="/static/dataTables.bootstrap4.min.js"></script>
+
+    <!-- plotly -->
+    <script type="text/javascript" src="/static/plotly-latest.min.js"></script>
+
+    <script type="text/javascript" src="/static/main.js"></script>
+</head>
+
+<body>
+
+    <div>
+        <textarea rows="5" cols="60" id="input_sql">select * from STOCK;</textarea>
+        <br>
+        <button id="btn_query">执行查询</button>
+    </div>
+
+    <script type="text/javascript">
+        $("#btn_query").click(function() {
+            var sql = $("#input_sql").val().trim();
+            if (!sql) return;
+            console.log(sql);
+            $.ajax({
+                url: "/cgi-bin/stocksql.py",
+                type: "post",
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify({
+                    "sql": sql
+                }),
+                success: function (result) {
+                    $("#div_table").empty();
+                    $("#div_table").append('<table class="table table-stripe" id="stockTable"></table>');
+                    register_df_to_table("#stockTable")(result);
+                }
+            });
+        });
+    </script>
+
+    <hr>
+    <h3>查询结果</h3>
+    <div id="div_table">
+        <table class="table table-stripe" id="stockTable"></table>
+    </div>
+
+</body>
+
+</html>

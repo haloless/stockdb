@@ -1,0 +1,259 @@
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" type="text/css" href="/static/dataTables.bootstrap4.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/main.css" />
+
+    <!-- jquery and datatable -->
+    <script type="text/javascript" src="/static/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="/static/popper.min.js"></script>
+    <script type="text/javascript" src="/static/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="/static/dataTables.bootstrap4.min.js"></script>
+
+    <!-- plotly -->
+    <script type="text/javascript" src="/static/plotly-latest.min.js"></script>
+
+    <script type="text/javascript" src="/static/main.js"></script>
+</head>
+
+<body>
+
+    <div>
+        <div>
+            股票代码，空格或回车分割（留空将查询所有股票）
+            <textarea rows="1" cols="20" id="input_symbols"></textarea>
+        </div>
+        <div>
+            细分行业
+            <select id="input_industry">
+                <option value="All">全部行业</option>
+                <option value='IT设备'>IT设备</option>
+                <option value='专用机械'>专用机械</option>
+                <option value='中成药'>中成药</option>
+                <option value='乳制品'>乳制品</option>
+                <option value='互联网'>互联网</option>
+                <option value='仓储物流'>仓储物流</option>
+                <option value='供气供热'>供气供热</option>
+                <option value='保险'>保险</option>
+                <option value='元器件'>元器件</option>
+                <option value='全国地产'>全国地产</option>
+                <option value='公共交通'>公共交通</option>
+                <option value='公路'>公路</option>
+                <option value='其他商业'>其他商业</option>
+                <option value='其他建材'>其他建材</option>
+                <option value='农业综合'>农业综合</option>
+                <option value='农用机械'>农用机械</option>
+                <option value='农药化肥'>农药化肥</option>
+                <option value='出版业'>出版业</option>
+                <option value='化学制药'>化学制药</option>
+                <option value='化工原料'>化工原料</option>
+                <option value='化工机械'>化工机械</option>
+                <option value='化纤'>化纤</option>
+                <option value='区域地产'>区域地产</option>
+                <option value='医疗保健'>医疗保健</option>
+                <option value='医药商业'>医药商业</option>
+                <option value='半导体'>半导体</option>
+                <option value='商品城'>商品城</option>
+                <option value='商贸代理'>商贸代理</option>
+                <option value='啤酒'>啤酒</option>
+                <option value='园区开发'>园区开发</option>
+                <option value='塑料'>塑料</option>
+                <option value='多元金融'>多元金融</option>
+                <option value='家居用品'>家居用品</option>
+                <option value='家用电器'>家用电器</option>
+                <option value='小金属'>小金属</option>
+                <option value='工程机械'>工程机械</option>
+                <option value='广告包装'>广告包装</option>
+                <option value='建筑工程'>建筑工程</option>
+                <option value='影视音像'>影视音像</option>
+                <option value='房产服务'>房产服务</option>
+                <option value='批发业'>批发业</option>
+                <option value='摩托车'>摩托车</option>
+                <option value='文教休闲'>文教休闲</option>
+                <option value='新型电力'>新型电力</option>
+                <option value='旅游景点'>旅游景点</option>
+                <option value='旅游服务'>旅游服务</option>
+                <option value='日用化工'>日用化工</option>
+                <option value='普钢'>普钢</option>
+                <option value='服饰'>服饰</option>
+                <option value='机场'>机场</option>
+                <option value='机床制造'>机床制造</option>
+                <option value='机械基件'>机械基件</option>
+                <option value='林业'>林业</option>
+                <option value='染料涂料'>染料涂料</option>
+                <option value='橡胶'>橡胶</option>
+                <option value='水力发电'>水力发电</option>
+                <option value='水务'>水务</option>
+                <option value='水泥'>水泥</option>
+                <option value='水运'>水运</option>
+                <option value='汽车整车'>汽车整车</option>
+                <option value='汽车服务'>汽车服务</option>
+                <option value='汽车配件'>汽车配件</option>
+                <option value='渔业'>渔业</option>
+                <option value='港口'>港口</option>
+                <option value='火力发电'>火力发电</option>
+                <option value='焦炭加工'>焦炭加工</option>
+                <option value='煤炭开采'>煤炭开采</option>
+                <option value='特种钢'>特种钢</option>
+                <option value='环境保护'>环境保护</option>
+                <option value='玻璃'>玻璃</option>
+                <option value='生物制药'>生物制药</option>
+                <option value='电信运营'>电信运营</option>
+                <option value='电器仪表'>电器仪表</option>
+                <option value='电器连锁'>电器连锁</option>
+                <option value='电气设备'>电气设备</option>
+                <option value='白酒'>白酒</option>
+                <option value='百货'>百货</option>
+                <option value='石油加工'>石油加工</option>
+                <option value='石油开采'>石油开采</option>
+                <option value='石油贸易'>石油贸易</option>
+                <option value='矿物制品'>矿物制品</option>
+                <option value='种植业'>种植业</option>
+                <option value='空运'>空运</option>
+                <option value='红黄酒'>红黄酒</option>
+                <option value='纺织'>纺织</option>
+                <option value='纺织机械'>纺织机械</option>
+                <option value='综合类'>综合类</option>
+                <option value='航空'>航空</option>
+                <option value='船舶'>船舶</option>
+                <option value='装修装饰'>装修装饰</option>
+                <option value='证券'>证券</option>
+                <option value='超市连锁'>超市连锁</option>
+                <option value='路桥'>路桥</option>
+                <option value='软件服务'>软件服务</option>
+                <option value='软饮料'>软饮料</option>
+                <option value='轻工机械'>轻工机械</option>
+                <option value='运输设备'>运输设备</option>
+                <option value='通信设备'>通信设备</option>
+                <option value='造纸'>造纸</option>
+                <option value='酒店餐饮'>酒店餐饮</option>
+                <option value='钢加工'>钢加工</option>
+                <option value='铁路'>铁路</option>
+                <option value='铅锌'>铅锌</option>
+                <option value='铜'>铜</option>
+                <option value='铝'>铝</option>
+                <option value='银行'>银行</option>
+                <option value='陶瓷'>陶瓷</option>
+                <option value='食品'>食品</option>
+                <option value='饲料'>饲料</option>
+                <option value='黄金'>黄金</option>
+            </select>
+        </div>
+        <div>
+            <label for="input_from_date">起始日期</label>
+            <input type="date" id="input_from_date" value="2019-01-01">
+            <label for="input_to_date">结束日期</label>
+            <input type="date" id="input_to_date" value="2025-01-01">
+        </div>
+        
+        <button id="btn_query">query</button>
+        <!-- <select id="plot_fields">
+            <option value="Price">现价</option>
+            <option value="Rise">涨幅%</option>
+            <option value="RiseSpeed">涨速%</option>
+            <option value="CirculateShares">流通股(亿)</option>
+        </select> -->
+    </div>
+
+    <hr>
+    <h3>平均值（请点击相应表头排序）</h3>
+    <div id="div_table">
+        <table class="table table-stripe" id="stockTable"></table>
+    </div>
+
+    <script type="text/javascript">
+        $("#btn_query").click(function () {
+            var symbols = split_by_space($("#input_symbols").val());
+            var from_date = $("#input_from_date").val();
+            var to_date = $("#input_to_date").val();
+            var industry = $("#input_industry").find(":selected").val();
+            if (industry === 'All') industry = '';
+            console.log(symbols);
+            console.log(from_date);
+            console.log(to_date);
+            console.log(industry);
+            $.ajax({
+                url: "/cgi-bin/stockstat.py",
+                type: "post",
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify({
+                    "symbols": symbols,
+                    "from_date": from_date,
+                    "to_date": to_date,
+                    "industry": industry
+                }),
+                success: function (result) {
+                    $("#div_table").empty();
+                    $("#div_table").append('<table class="table table-stripe" id="stockTable"></table>');
+                    register_df_to_table("#stockTable")(result);
+                }
+            });
+        });
+    </script>
+
+    <script type="text/javascript">
+        // $("#btn_query").click(function() {
+        //     var symbols = $("#input_symbols").val().trim().split(/\s+/);
+        //     var from_date = $("#input_from_date").val();
+        //     var to_date = $("#input_to_date").val();
+        //     console.log(symbols);
+        //     console.log(from_date);
+        //     console.log(to_date);
+        //     if (symbols.length == 0) return;
+        //     $.ajax({
+        //         url: "/cgi-bin/stockhist.py",
+        //         type: "post",
+        //         contentType: "application/json",
+        //         dataType: "json",
+        //         data: JSON.stringify({
+        //             "symbols": symbols,
+        //             "from_date": from_date,
+        //             "to_date": to_date
+        //         }),
+        //         success: function (result) {
+        //             // console.log(result);
+        //             var traces = [];
+        //             for (var s = 0; s < symbols.length; s++) {
+        //                 var symbol = symbols[s];
+        //                 var data = result[symbol];
+        //                 console.log(data);
+        //                 var n = data.index.length;
+        //                 var i_today = data.columns.indexOf("Today");
+        //                 var keyopt = $("select#plot_fields").find(":selected");
+        //                 var i_price = data.columns.indexOf(keyopt.val());
+        //                 var xs = new Array(n);
+        //                 var ys = new Array(n);
+        //                 for (var i = 0; i < n; i++) {
+        //                     xs[i] = data.data[i][i_today];
+        //                     ys[i] = data.data[i][i_price];
+        //                 }
+        //                 var trace = {
+        //                     x: xs, y: ys,
+        //                     type: "scatter",
+        //                     name: symbol + "/" + keyopt.text()
+        //                 };
+        //                 traces.push(trace);
+        //             }
+        //             var layout = {
+        //                 showlegend: true,
+        //                 //legend: { "orientation": "h" },
+        //                 xaxis: {
+        //                     title: '日期',
+        //                     type: 'date'
+        //                 }
+        //             };
+        //             Plotly.newPlot("mydiv", traces, layout);
+        //         }
+        //     });
+        // });
+        // // $.getJSON("/cgi-bin/stocklist.py", register_df_to_table("#stockTable"));
+        
+    </script>
+</body>
+
+</html>
