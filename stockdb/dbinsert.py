@@ -98,7 +98,8 @@ def sql_exec_many(sql, data):
 def extract_columns(df, keys):
     data = []
     for _, row in df.iterrows():
-        if not row[STOCK.INDUSTRY.showname] or row[STOCK.INDUSTRY.showname]=='nan':
+        # some bad stock may have empty "细分行业", filter them out
+        if not row[STOCK.INDUSTRY.showname] or str(row[STOCK.INDUSTRY.showname]).lower()=='nan':
             print("will skip invalid row: " + str(row))
             continue
         values = tuple(conv_null(row[k]) for k in keys)
