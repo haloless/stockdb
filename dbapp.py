@@ -82,17 +82,17 @@ def stockhist():
     conn = stockdb.dbconn.get_db_conn()
     sql = "select * from HISTORY where SYMBOL='{}'"
 
-    if data["trade_only"]:
-        trade_columns = [HISTORY.TODAY, HISTORY.SYMBOL, HISTORY.LOCALNAME, HISTORY.INDUSTRY,
-        HISTORY.PRICE, HISTORY.CLOSEPRICE, HISTORY.SELLPRICE,
-        HISTORY.RISE, HISTORY.RISESPEED, HISTORY.CIRCULATESHARES,
-        HISTORY.PRICEEARNRATIO, HISTORY.TURNOVER,
-        HISTORY.RELATIVEFLOW, HISTORY.BULKFLOW, HISTORY.CURRENTFLOW,
-        HISTORY.NETINFLOW, HISTORY.BULKINFLOW, HISTORY.BETACOEF,
-        HISTORY.MARKETCAPITAL, HISTORY.VOLUME, HISTORY.INFLOWSHARE, HISTORY.OUTFLOWSHARE]
-        sql = "select " + ','.join(str(c) for c in trade_columns)
-    else:
-        sql = "select *"
+    sql = "select *"
+    # if data["trade_only"]:
+    #     trade_columns = [HISTORY.TODAY, HISTORY.SYMBOL, HISTORY.LOCALNAME, HISTORY.INDUSTRY,
+    #     HISTORY.PRICE,
+    #     HISTORY.RISE, HISTORY.LISTSHARES,
+    #     HISTORY.TURNOVERRATE,
+    #     HISTORY.RELATIVEFLOW, HISTORY.BULKFLOW,
+    #     HISTORY.NETINFLOW, HISTORY.BULKINFLOW,
+    #     HISTORY.MARKETCAPITAL, HISTORY.VOLUME, HISTORY.INFLOWSHARE, HISTORY.OUTFLOWSHARE]
+    #     sql = "select " + ','.join(str(c) for c in trade_columns)
+
     sql += " from HISTORY where SYMBOL=?"
     if data["from_date"]:
         from_date = data["from_date"]
@@ -105,23 +105,37 @@ def stockhist():
     symbols = data["symbols"]
     dfs_table = []
     dfs_chart = []
+    symbols2 = []
     for symbol in symbols:
         # run query to get basic data
         df = pd.read_sql_query(sql, conn, params=(symbol,))
+
+        # combine symbol and readable name
+        symbols2.append(symbol + "/" + df[HISTORY.LOCALNAME.dbname][0])
+
         # enhance some more data, mainly accumulated values
-        for c in [HISTORY.VOLUME, HISTORY.INFLOWSHARE, HISTORY.OUTFLOWSHARE]:
+        cumfields = [HISTORY.NETINFLOW, HISTORY.BULKINFLOW,
+        HISTORY.TURNOVER, HISTORY.INFLOW, HISTORY.OUTFLOW,
+        HISTORY.VOLUME, HISTORY.INFLOWSHARE, HISTORY.OUTFLOWSHARE]
+        for c in cumfields:
             if c.dbname in df:
                 acc = df[c.dbname].cumsum()
                 df["cum_" + c.dbname] = acc
 
+
+        # truncate precision
+        df = df.round(decimals=3)
+
+        #
         dfs_chart.append(df.to_json(orient="split"))
 
         # rename to readable
         df = stockdb.dbstat.rename_df_cols(df, HISTORY.columns())
         dfs_table.append(df.to_json(orient="table"))
+
     
-    js_table = "{" + ",".join('"'+s+'"' + ":" + d for s,d in zip(symbols, dfs_table)) + "}"
-    js_chart = "{" + ",".join('"'+s+'"' + ":" + d for s,d in zip(symbols, dfs_chart)) + "}"
+    js_table = "{" + ",".join('"'+s+'"' + ":" + d for s,d in zip(symbols2, dfs_table)) + "}"
+    js_chart = "{" + ",".join('"'+s+'"' + ":" + d for s,d in zip(symbols2, dfs_chart)) + "}"
 
     return '{' + f'"table":{js_table},"chart":{js_chart}' + '}'
 ####
@@ -144,12 +158,8 @@ def stockstat():
     if data["industry"]:
         industry = data["industry"]
 
-    fields = [HISTORY.PRICE, HISTORY.RISE, 
-        # HISTORY.RISESPEED, HISTORY.CIRCULATESHARES,
-        #HISTORY.PRICEEARNRATIO, HISTORY.TURNOVER,
-        # HISTORY.RELATIVEFLOW, HISTORY.BULKFLOW, HISTORY.CURRENTFLOW,
+    fields = [HISTORY.PRICE, HISTORY.RISE,
         HISTORY.NETINFLOW, HISTORY.BULKINFLOW,
-        # HISTORY.BETACOEF,
         HISTORY.MARKETCAPITAL, HISTORY.VOLUME, HISTORY.INFLOWSHARE, HISTORY.OUTFLOWSHARE]
 
     df = stockdb.dbstat.get_grouped_df(begin_date=from_date, end_date=to_date, fields=fields,

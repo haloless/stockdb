@@ -1,10 +1,14 @@
+<!doctype html>
 <html lang="zh-CN">
 
 <head>
     <meta charset="utf-8">
+    <link rel="shortcut icon" href="/static/favicon.ico">
 
-    <script src="/static/jquery-3.3.1.min.js"></script>
-    <script type="text/javascript" src="/static/ajaxfileupload.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css" />
+
+    <script type="text/javascript" src="/static/js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="/static/js/ajaxfileupload.js"></script>
 
     <script type="text/javascript">
         function drop_table() {
@@ -82,8 +86,8 @@
 
     <h1>表操作</h1>
     <div>
-        <button onclick="drop_table()">删除数据表</button>
-        <button onclick="create_table()">创建数据表</button>
+        <button class="btn btn-danger" onclick="drop_table()">删除数据表</button>
+        <button class="btn btn-warning" onclick="create_table()">创建数据表</button>
     </div>
 
 
@@ -96,8 +100,9 @@
         <input type="date" id="input_date" name="input_date">
         <!-- <button onclick="guess_date()">从文件名推测日期</button> -->
         <br>
-        <button onclick="import_data()">执行导入</button>
-        <div id="import_result"></div>
+        <button class="btn btn-primary" onclick="import_data()">执行导入</button>
+        
+        <div id="import_result" class="alert alert-success"></div>
 
         <script type="text/javascript">
             hook_guess_date();

@@ -66,6 +66,8 @@ class STOCK(Table):
     SYMBOL = Field(showname='代码', dbname='Symbol', dbtype='char(10)', constraint='primary key not null')
     LOCALNAME = Field(showname='名称', dbname='LocalName', dbtype='text', constraint='not null')
     INDUSTRY = Field(showname='细分行业', dbname='Industry', dbtype='text', constraint='not null')
+    RDEXPENSE = Field(showname='研发费用(亿)', dbname='RDExpense', dbtype='real')
+    EMPLOYEENUM = Field(showname='员工人数', dbname='EmployeeNum', dbtype='real')
 ####
 
 # 代码	名称	现价	涨幅%	涨速%	卖价	流通股(亿)	市盈(动)	换手%	细分行业
@@ -79,29 +81,47 @@ class HISTORY(Table):
     '''HISTORY table
     净流入=流入量*价格
     '''
+    # primary fields
+    TODAY       = Field(showname='日期', dbname='Today', dbtype='date', constraint='not null')
+    SYMBOL      = Field(showname='代码', dbname='Symbol', dbtype='char(10)', constraint='not null')
+    LOCALNAME   = Field(showname='名称', dbname='LocalName', dbtype='text', constraint='not null')
+    INDUSTRY    = Field(showname='细分行业', dbname='Industry', dbtype='text', constraint='not null')
+    #
+    PRICE       = Field(showname='现价', dbname='Price', dbtype='real')
+    RISE        = Field(showname='涨幅%', dbname='Rise', dbtype='real')
+    LISTSHARES  = Field(showname='流通股(亿)', dbname='ListShares', dbtype='real')
+    TURNOVERRATE    = Field(showname='换手%', dbname='TurnoverRate', dbtype='real')
+    RELATIVEFLOW = Field(showname='相对流量%', dbname='RelativeFlow', dbtype='real')
+    BULKFLOW    = Field(showname='大宗流量%', dbname='BulkFlow', dbtype='real')
+    NETINFLOW   = Field(showname='净流入', dbname='NetInflow', dbtype='real')
+    BULKINFLOW  = Field(showname='大宗流入', dbname='BulkInflow', dbtype='real')
+    # derived quantities
+    MARKETCAPITAL = Field(showname='流通市值(亿)', dbname='MarketCapital', dbtype='real', derived=True)
+    TURNOVER    = Field(showname='成交额(亿)', dbname='Turnover', dbtype='real', derived=True)
+    INFLOW      = Field(showname='流入额(亿)', dbname='Inflow', dbtype='real', derived=True)
+    OUTFLOW     = Field(showname='流出额(亿)', dbname='Outflow', dbtype='real', derived=True)
+    VOLUME      = Field(showname='成交量(亿)', dbname='Volume', dbtype='real', derived=True)
+    INFLOWSHARE = Field(showname='流入量(亿)', dbname='InflowShare', dbtype='real', derived=True)
+    OUTFLOWSHARE= Field(showname='流出量(亿)', dbname='OutflowShare', dbtype='real', derived=True)
+####
+
+class HISTORY2(Table):
     TODAY = Field(showname='日期', dbname='Today', dbtype='date', constraint='not null')
     SYMBOL = Field(showname='代码', dbname='Symbol', dbtype='char(10)', constraint='not null')
-    LOCALNAME = Field(showname='名称', dbname='LocalName', dbtype='text', constraint='not null')
-    PRICE = Field(showname='现价', dbname='Price', dbtype='real')
+    #
     CLOSEPRICE = Field(showname='昨收', dbname='ClosePrice', dbtype='real')
-    RISE = Field(showname='涨幅%', dbname='Rise', dbtype='real')
-    RISESPEED = Field(showname='涨速%', dbname="RiseSpeed", dbtype='real')
     SELLPRICE = Field(showname='卖价', dbname='SellPrice', dbtype='real')
-    CIRCULATESHARES = Field(showname='流通股(亿)', dbname='CirculateShares', dbtype='real')
-    PRICEEARNRATIO = Field(showname='市盈(动)', dbname='PriceEarnRatio', dbtype='real')
-    TURNOVER = Field(showname='换手%', dbname='Turnover', dbtype='real')
-    INDUSTRY = Field(showname='细分行业', dbname='Industry', dbtype='text', constraint='not null')
-    RELATIVEFLOW = Field(showname='相对流量%', dbname='RelativeFlow', dbtype='real')
-    BULKFLOW = Field(showname='大宗流量%', dbname='BulkFlow', dbtype='real')
     CURRENTFLOW = Field(showname='现量', dbname='CurrentFlow', dbtype='real')
+    RISESPEED = Field(showname='涨速%', dbname="RiseSpeed", dbtype='real')
+    PRICEEARNRATIO = Field(showname='市盈(动)', dbname='PriceEarnRatio', dbtype='real')
+
     OPENTURNOVER = Field(showname='开盘换手Z', dbname='OpenTurnover', dbtype='real')
     CONTRISEDAYS = Field(showname='连涨天', dbname='ContRiseDays', dbtype='int')
     RISEDAY3 = Field(showname='3日涨幅%', dbname='RiseDay3', dbtype='real')
     RISEDAY20 = Field(showname='20日涨幅%', dbname='RiseDay20', dbtype='real')
     RISEDAY60 = Field(showname='60日涨幅%', dbname='RiseDay60', dbtype='real')
     RISEYEARBEGIN = Field(showname='年初至今%', dbname='RiseYearBegin', dbtype='real')
-    NETINFLOW = Field(showname='净流入', dbname='NetInflow', dbtype='real')
-    BULKINFLOW = Field(showname='大宗流入', dbname='BulkInflow', dbtype='real')
+
     BETACOEF = Field(showname='贝塔系数', dbname='BetaCoef', dbtype='real')
     EARNPERSHARE = Field(showname='每股收益', dbname='EarnPerShare', dbtype='real')
     NETASSETPERSHARE = Field(showname='每股净资', dbname='NetAssetPerShare', dbtype='real')
@@ -110,15 +130,8 @@ class HISTORY(Table):
     EQUITYRATIO = Field(showname='权益比%', dbname='EquityRatio', dbtype='real')
     NONEXTRANETPROFIT = Field(showname='扣非净利润(亿)', dbname='NonExtraNetProfit', dbtype='real')
     NETPROFITRATE = Field(showname='净利润率%', dbname='NetProfitRatio', dbtype='real')
-    RDEXPENSE = Field(showname='研发费用(亿)', dbname='RDExpense', dbtype='real')
-    EMPLOYEENUM = Field(showname='员工人数', dbname='EmployeeNum', dbtype='real')
-    # derived quantities
-    MARKETCAPITAL = Field(showname='流通市值(亿)', dbname='MarketCapital', dbtype='real', derived=True)
-    VOLUME = Field(showname='成交量(亿)', dbname='Volume', dbtype='real', derived=True)
-    INFLOWSHARE = Field(showname='流入量(亿)', dbname='InflowShare', dbtype='real', derived=True)
-    OUTFLOWSHARE = Field(showname='流出量(亿)', dbname='OutflowShare', dbtype='real', derived=True)
-####
 
+####
 
 
 ################################################################################

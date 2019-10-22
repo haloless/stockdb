@@ -103,6 +103,11 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+################################################################################
 # project files
+.vscode
 test.db
+
+# ignore gui code at the moment...
+stockdb/dbgui
 

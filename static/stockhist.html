@@ -1,40 +1,34 @@
+<!doctype html>
 <html lang="zh-CN">
 
 <head>
     <meta charset="utf-8">
+    <link rel="shortcut icon" href="/static/favicon.ico">
 
     <!-- CSS -->
-    <!-- <link rel="stylesheet" type="text/css"
-        href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css" />
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="/static/main.css" /> -->
-    <link rel="stylesheet" type="text/css" href="/static/dataTables.bootstrap4.min.css" />
-    <link rel="stylesheet" type="text/css" href="/static/bootstrap.min.css" />
-    <link rel="stylesheet" type="text/css" href="/static/main.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/dataTables.bootstrap4.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/main.css" />
+
+    <style>
+        fieldset.fieldset-plot-series {
+            display: inline; border: 2px groove;
+        }
+        legend.legend-plot-series {
+            width: inherit; margin-left: 10px; font-size: 1em; margin-bottom: 0;
+        }
+    </style>
 
     <!-- JS -->
-    <!-- <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
-    <script type="text/javascript" src="/static/plotly-latest.min.js"></script>
+    <script type="text/javascript" src="/static/js/plotly-latest.min.js"></script>
     
-    <!-- <script src="https://code.jquery.com/jquery-3.3.1.min.js"
-        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-        crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-        crossorigin="anonymous"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script> -->
+    <script type="text/javascript" src="/static/js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="/static/js/popper.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="/static/js/dataTables.bootstrap4.min.js"></script>
 
-    <script type="text/javascript" src="/static/jquery-3.3.1.min.js"></script>
-    <script type="text/javascript" src="/static/popper.min.js"></script>
-    <script type="text/javascript" src="/static/bootstrap.min.js"></script>
-    <script type="text/javascript" src="/static/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="/static/dataTables.bootstrap4.min.js"></script>
-
-    <script type="text/javascript" src="/static/main.js"></script>
+    <script type="text/javascript" src="/static/js/main.js"></script>
 
     <script type="text/javascript">
         // note this depends on two ids: plot_fields and stock_chart
@@ -44,35 +38,53 @@
             for (var s in result) { symbols.push(s); }
             symbols.sort();
 
+            var series_key = [];
+            var series_name = [];
+            $("#plot_series").find("input[type=checkbox]").each(function(index, elem) {
+                // here is standard DOM element
+                if (elem.checked) {
+                    series_key.push(elem.value);
+                    series_name.push(elem.nextSibling.nodeValue);
+                }
+            });
+            // console.log(series_key);
+            // console.log(series_name);
+
             // console.log(result);
             var traces = [];
             for (var s = 0; s < symbols.length; s++) {
                 var symbol = symbols[s];
                 var data = result[symbol];
-                console.log(data);
+                // console.log(data);
                 var n = data.index.length;
                 var i_today = data.columns.indexOf("Today");
-                var keyopt = $("select#plot_fields").find(":selected");
-                var i_price = data.columns.indexOf(keyopt.val());
-                var xs = new Array(n);
-                var ys = new Array(n);
-                for (var i = 0; i < n; i++) {
-                    xs[i] = data.data[i][i_today];
-                    ys[i] = data.data[i][i_price];
+                // var keyopt = $("select#plot_fields").find(":selected");
+                for (var j = 0; j < series_key.length; j++) {
+
+                    var i_price = data.columns.indexOf(series_key[j]);
+                    var xs = new Array(n);
+                    var ys = new Array(n);
+                    for (var i = 0; i < n; i++) {
+                        xs[i] = data.data[i][i_today];
+                        ys[i] = data.data[i][i_price];
+                    }
+                    traces.push({
+                        x: xs, y: ys,
+                        type: "scatter",
+                        mode: "lines+markers",
+                        name: symbol + "/" + series_name[j],
+                        //hoverinfo: 'text'
+                        hoverlabel: { namelength: -1 }
+                    });
                 }
-                var trace = {
-                    x: xs, y: ys,
-                    type: "scatter",
-                    name: symbol + "/" + keyopt.text()
-                };
-                traces.push(trace);
             }
             var layout = {
                 showlegend: true,
                 //legend: { "orientation": "h" },
                 xaxis: {
                     title: '日期',
-                    type: 'date'
+                    type: 'date',
+                    tickformat: '%Y-%m-%d'
                 }
             };
             Plotly.newPlot("stock_chart", traces, layout);
@@ -127,20 +139,21 @@
             <label for="input_trade_only">只包含常用交易数据</label>
             <input type="checkbox" id="input_trade_only" checked>
         </div>
-        <button id="btn_query">query</button>
+        <button id="btn_query" class="btn btn-primary">查询</button>
     </div>
 
     <div>
         <!-- plot area -->
-        <select id="plot_fields">
+        <label>图表项目</label>
+        <!-- <select id="plot_fields">
             <option value="Price">现价</option>
             <option value="ClosePrice">昨收</option>
             <option value="Rise">涨幅%</option>
             <option value="RiseSpeed">涨速%</option>
             <option value="SellPrice">卖价</option>
-            <option value="CirculateShares">流通股(亿)</option>
+            <option value="ListShares">流通股(亿)</option>
             <option value="PriceEarnRatio">市盈(动)</option>
-            <option value="Turnover">换手%</option>
+            <option value="TurnoverRate">换手%</option>
             <option value="RelativeFlow">相对流量%</option>
             <option value="BulkFlow">大宗流量%</option>
             <option value="CurrentFlow">现量</option>
@@ -151,11 +164,60 @@
             <option value="Volume">成交量(亿)</option>
             <option value="InflowShare">流入量(亿)</option>
             <option value="OutflowShare">流出量(亿)</option>
-            <!-- 累计量 -->
+            <option value="cum_NetInflow">累积净流入</option>
+            <option value="cum_BulkInflow">累积大宗流入</option>
             <option value="cum_Volume">累积成交量(亿)</option>
             <option value="cum_InflowShare">累积流入量(亿)</option>
             <option value="cum_OutflowShare">累积流出量(亿)</option>
-        </select>
+        </select> -->
+        <div id="plot_series">
+            <label><input type="checkbox" value="Price">现价</label>
+            <label><input type="checkbox" value="Rise">涨幅%</label>
+            <label><input type="checkbox" value="TurnoverRate">换手%</label>
+            <label><input type="checkbox" value="RelativeFlow">相对流量%</label>
+            <label><input type="checkbox" value="BulkFlow">大宗流量%</label>
+            <label><input type="checkbox" value="MarketCapital">流通市值(亿)</label>
+            <br>
+            <!-- 金额 -->
+            <fieldset class="fieldset-plot-series">
+                <legend class="legend-plot-series"
+                onclick="$(this).parent().find('input').trigger('click');">金额（点击此处全选）</legend>
+                <label><input type="checkbox" value="Turnover" checked>成交额(亿)</label>
+                <label><input type="checkbox" value="Inflow" checked>流入额(亿)</label>
+                <label><input type="checkbox" value="Outflow" checked>流出额(亿)</label>
+                <label><input type="checkbox" value="NetInflow" checked>净流入</label>
+                <label><input type="checkbox" value="BulkInflow" checked>大宗流入</label>    
+            </fieldset>
+            <!-- 数量 -->
+            <fieldset class="fieldset-plot-series">
+                <legend class="legend-plot-series"
+                onclick="$(this).parent().find('input').trigger('click');">数量（点击此处全选）</legend>
+                <label><input type="checkbox" value="Volume">成交量(亿)</label>
+                <label><input type="checkbox" value="InflowShare">流入量(亿)</label>
+                <label><input type="checkbox" value="OutflowShare">流出量(亿)</label>
+            </fieldset>
+            <br>
+            <!-- 累计金额 -->
+            <fieldset class="fieldset-plot-series">
+                <legend class="legend-plot-series"
+                onclick="$(this).parent().find('input').trigger('click');">累计金额（点击此处全选）</legend>
+                <label><input type="checkbox" value="cum_Turnover">累计成交额(亿)</label>
+                <label><input type="checkbox" value="cum_Inflow">累计流入额(亿)</label>
+                <label><input type="checkbox" value="cum_Outflow">累计流出额(亿)</label>
+                <label><input type="checkbox" value="cum_NetInflow">累计净流入</label>
+                <label><input type="checkbox" value="cum_BulkInflow">累计大宗流入</label>    
+            </fieldset>
+            <!-- 累计数量 -->
+            <fieldset class="fieldset-plot-series">
+                <legend class="legend-plot-series"
+                onclick="$(this).parent().find('input').trigger('click');">累计数量（点击此处全选）</legend>
+                <label><input type="checkbox" value="cum_Volume">累计成交量(亿)</label>
+                <label><input type="checkbox" value="cum_InflowShare">累计流入量(亿)</label>
+                <label><input type="checkbox" value="cum_OutflowShare">累计流出量(亿)</label>
+            </fieldset>
+        </div>
+
+        <!-- 图表位置 -->
         <div id="stock_chart" style="width: 80%"></div>
     </div>
 
@@ -198,7 +260,10 @@
         });
         
         // replot series on select changed
-        $("select#plot_fields").change(function(e) {
+        // $("select#plot_fields").change(function(e) {
+        //     plot_chart(g_stock_data["chart"]);
+        // });
+        $("#plot_series").find("input[type=checkbox]").change(function(e) {
             plot_chart(g_stock_data["chart"]);
         });
     </script>

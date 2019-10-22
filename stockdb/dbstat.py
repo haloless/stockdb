@@ -70,30 +70,3 @@ group by {HISTORY.SYMBOL}
     return df
 ####
 
-
-def main():
-
-
-    begin_date = "1970-01-01"
-    end_date = "2050-01-01"
-    fields = [HISTORY.CIRCULATESHARES,
-        HISTORY.TURNOVER,
-        HISTORY.RELATIVEFLOW,
-        HISTORY.NETINFLOW,
-        HISTORY.BULKINFLOW,]
-
-    df = get_grouped_df(begin_date=begin_date, end_date=end_date, fields=fields)
-
-    # print(df)
-    js = df.to_json(orient="table")
-
-    with open("./stockdb/hoge.js", "w", encoding="utf-8") as fp:
-        fp.write("const stockdata=" + js + ";\n")
-        #fp.write("const stockcols={" + ",".join(f"'{c.dbname}':'{c.showname}'" for c in HISTORY.columns()) + "};\n")
-
-####
-
-if __name__ == '__main__':
-    main()
-####
-

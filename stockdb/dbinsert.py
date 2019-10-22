@@ -114,7 +114,8 @@ def insert_stock(df):
     data = extract_columns(df, keys)
     # print(len(data))
     
-    insert_sql = f"insert or ignore into STOCK values ({','.join('?' for _ in keys)});"
+    # insert_sql = f"insert or ignore into STOCK values ({','.join('?' for _ in keys)});"
+    insert_sql = f"insert or replace into STOCK values ({','.join('?' for _ in keys)});"
     # print(insert_sql)
     
     sql_exec_many(insert_sql, data)
@@ -169,10 +170,19 @@ def insert_data(excelfilename, today):
     try:
         conn = get_db_conn()
         cursor = conn.cursor()
-        cursor.execute("update HISTORY set MARKETCAPITAL = PRICE * CIRCULATESHARES where TODAY=?",(today,))
-        cursor.execute("update HISTORY set VOLUME = CIRCULATESHARES * (TURNOVER/100) where TODAY=?",(today,))
-        cursor.execute("update HISTORY set INFLOWSHARE = VOLUME * (1+RELATIVEFLOW/100) / 2 where TODAY=?",(today,))
-        cursor.execute("update HISTORY set OUTFLOWSHARE = VOLUME * (1-RELATIVEFLOW/100) / 2 where TODAY=?",(today,))
+        # 流通市值
+        cursor.execute("update HISTORY set MARKETCAPITAL = PRICE * LISTSHARES where TODAY=?", (today,))
+        # 成交额 流入额 流出额
+        cursor.execute("update HISTORY set TURNOVER = NETINFLOW / (RELATIVEFLOW/100) where TODAY=?", (today,))
+        cursor.execute("update HISTORY set INFLOW = (TURNOVER + NETINFLOW) / 2 where TODAY=?", (today,))
+        cursor.execute("update HISTORY set OUTFLOW = (TURNOVER - NETINFLOW) / 2 where TODAY=?", (today,))
+        # 成交量 流入量 流出量
+        # cursor.execute("update HISTORY set VOLUME = LISTSHARES * (TURNOVERRATE/100) where TODAY=?", (today,))
+        # cursor.execute("update HISTORY set INFLOWSHARE = VOLUME * (1+RELATIVEFLOW/100) / 2 where TODAY=?", (today,))
+        # cursor.execute("update HISTORY set OUTFLOWSHARE = VOLUME * (1-RELATIVEFLOW/100) / 2 where TODAY=?", (today,))
+        cursor.execute("update HISTORY set VOLUME = TURNOVER / PRICE where TODAY=?", (today,))
+        cursor.execute("update HISTORY set INFLOWSHARE = INFLOW / PRICE where TODAY=?", (today,))
+        cursor.execute("update HISTORY set OUTFLOWSHARE = OUTFLOW / PRICE where TODAY=?", (today,))
         conn.commit()
     except:
         conn.rollback()
