@@ -158,12 +158,17 @@ def stockstat():
     if data["industry"]:
         industry = data["industry"]
 
-    fields = [HISTORY.PRICE, HISTORY.RISE,
-        HISTORY.NETINFLOW, HISTORY.BULKINFLOW,
-        HISTORY.MARKETCAPITAL, HISTORY.VOLUME, HISTORY.INFLOWSHARE, HISTORY.OUTFLOWSHARE]
+    fields = [
+        #HISTORY.PRICE, HISTORY.RISE, HISTORY.MARKETCAPITAL, 
+        HISTORY.TURNOVERRATE,
+        HISTORY.RELATIVEFLOW, HISTORY.BULKFLOW, HISTORY.NETINFLOW, HISTORY.BULKINFLOW,
+        HISTORY.TURNOVER, HISTORY.INFLOW, HISTORY.OUTFLOW,
+        HISTORY.VOLUME, HISTORY.INFLOWSHARE, HISTORY.OUTFLOWSHARE]
 
     df = stockdb.dbstat.get_grouped_df(begin_date=from_date, end_date=to_date, fields=fields,
     symbols=symbols, industry=industry)
+
+    df = df.round(decimals=3)
 
     js = df.to_json(orient="table")
     return js

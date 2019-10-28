@@ -152,13 +152,7 @@
             <input type="date" id="input_to_date" value="2025-01-01">
         </div>
         
-        <button id="btn_query">query</button>
-        <!-- <select id="plot_fields">
-            <option value="Price">现价</option>
-            <option value="Rise">涨幅%</option>
-            <option value="RiseSpeed">涨速%</option>
-            <option value="ListShares">流通股(亿)</option>
-        </select> -->
+        <button id="btn_query" class="btn btn-primary">查询</button>
     </div>
 
     <hr>
@@ -198,64 +192,6 @@
         });
     </script>
 
-    <script type="text/javascript">
-        // $("#btn_query").click(function() {
-        //     var symbols = $("#input_symbols").val().trim().split(/\s+/);
-        //     var from_date = $("#input_from_date").val();
-        //     var to_date = $("#input_to_date").val();
-        //     console.log(symbols);
-        //     console.log(from_date);
-        //     console.log(to_date);
-        //     if (symbols.length == 0) return;
-        //     $.ajax({
-        //         url: "/cgi-bin/stockhist.py",
-        //         type: "post",
-        //         contentType: "application/json",
-        //         dataType: "json",
-        //         data: JSON.stringify({
-        //             "symbols": symbols,
-        //             "from_date": from_date,
-        //             "to_date": to_date
-        //         }),
-        //         success: function (result) {
-        //             // console.log(result);
-        //             var traces = [];
-        //             for (var s = 0; s < symbols.length; s++) {
-        //                 var symbol = symbols[s];
-        //                 var data = result[symbol];
-        //                 console.log(data);
-        //                 var n = data.index.length;
-        //                 var i_today = data.columns.indexOf("Today");
-        //                 var keyopt = $("select#plot_fields").find(":selected");
-        //                 var i_price = data.columns.indexOf(keyopt.val());
-        //                 var xs = new Array(n);
-        //                 var ys = new Array(n);
-        //                 for (var i = 0; i < n; i++) {
-        //                     xs[i] = data.data[i][i_today];
-        //                     ys[i] = data.data[i][i_price];
-        //                 }
-        //                 var trace = {
-        //                     x: xs, y: ys,
-        //                     type: "scatter",
-        //                     name: symbol + "/" + keyopt.text()
-        //                 };
-        //                 traces.push(trace);
-        //             }
-        //             var layout = {
-        //                 showlegend: true,
-        //                 //legend: { "orientation": "h" },
-        //                 xaxis: {
-        //                     title: '日期',
-        //                     type: 'date'
-        //                 }
-        //             };
-        //             Plotly.newPlot("mydiv", traces, layout);
-        //         }
-        //     });
-        // });
-        // // $.getJSON("/cgi-bin/stocklist.py", register_df_to_table("#stockTable"));
-        
-    </script>
 </body>
 
 </html>
