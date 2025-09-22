@@ -1,14 +1,13 @@
 
 from datetime import datetime
 import pandas as pd
-import sqlite3
 
 from .dbconn import get_db_conn
 from .dbschema import STOCK, HISTORY
 
 def drop_tables():
+    conn = get_db_conn()
     try:
-        conn = get_db_conn()
         cursor = conn.cursor()
         cursor.execute("drop table if exists STOCK;")
         cursor.execute("drop table if exists HISTORY;")
@@ -20,8 +19,8 @@ def drop_tables():
 ####
 
 def create_table():
+    conn = get_db_conn()
     try:
-        conn = get_db_conn()
         cursor = conn.cursor()
 
         cursor.execute(STOCK.to_sql_create())
@@ -48,14 +47,20 @@ def conv_null(val):
 ####
 
 def conv_zh_num(x):
-    '''return in 亿'''
+    """return in 亿"""
+    x = conv_null(x)
+    if not x:
+        return x
+
     if isinstance(x, int) or isinstance(x, float):
         return float(x) / 1e8
     elif isinstance(x, str):
-        if x[-1]=='万': return float(x[0:-1]) / 1e4
-        if x[-1]=='亿': return float(x[0:-1])
-    else:
-        return x
+        if x[-1]=='万':
+            return float(x[0:-1]) / 1e4
+        elif x[-1]=='亿':
+            return float(x[0:-1])
+
+    return x
 ####
 
 def conv_trunc_last(x):
@@ -65,25 +70,69 @@ def conv_trunc_last(x):
         return x
 ####
 
+def conv_strip_symbol(x: str):
+    """sample: =\"603359\""""
+    return x.strip().lstrip('=').strip('"')
+
 ################################################################################
 
-def read_excel_data(excelfilename, today=None):
+DATA_TYPES = {
+    '代码': str,
+    '细分行业': str,
+}
+
+DATA_CONVERTERS = {
+    '净流入': conv_zh_num,
+    '大宗流入': conv_zh_num,
+    '每股收益': conv_trunc_last,
+    '流通市值': conv_zh_num,
+    '代码': conv_strip_symbol,
+}
+
+def read_data(filename: str, today=None):
     if not today:
         today = datetime.now().strftime("%Y-%m-%d")
     print(today)
 
-    # we need skip the last row because it is '数据来源:通达信'
-    df = pd.read_excel(excelfilename, skipfooter=1, dtype={'代码':str, '细分行业':str},
-                       converters={'净流入':conv_zh_num, '大宗流入':conv_zh_num, '每股收益':conv_trunc_last})
-    
+    df = None
+
+    if filename.endswith(".xls"):
+        try:
+            # we need skip the last row because it is '数据来源:通达信'
+            df = pd.read_excel(filename,
+                               skipfooter=1,
+                               dtype=DATA_TYPES,
+                               converters=DATA_CONVERTERS)
+        except ValueError:
+            print(f"Failed to import {filename} as excel file - will fallback to text file")
+
+    if not df:
+        df = pd.read_csv(filename,
+                         delimiter='\t',
+                         skipfooter=1,
+                         dtype=DATA_TYPES,
+                         converters=DATA_CONVERTERS,
+                         encoding='gbk')
+
+    normalize_data(df)
+
     # add a today column
     df[HISTORY.TODAY.showname] = pd.Series([today]*len(df), index=df.index)
     return df
 ####
 
+def normalize_data(df: pd.DataFrame):
+    for idx, row in df.iterrows():
+        # some stock may have empty "细分行业"
+        # assume they all from ETF
+        if not row[STOCK.INDUSTRY.showname] or str(row[STOCK.INDUSTRY.showname]).lower() == 'nan':
+            print(f"tag index {idx} stock {row[STOCK.SYMBOL.showname]} as ETF")
+            df.at[idx, STOCK.INDUSTRY.showname] = 'ETF'
+
+
 def sql_exec_many(sql, data):
+    conn = get_db_conn()
     try:
-        conn = get_db_conn()
         cursor = conn.cursor()
         cursor.executemany(sql, data)
         conn.commit()
@@ -98,10 +147,10 @@ def sql_exec_many(sql, data):
 def extract_columns(df, keys):
     data = []
     for _, row in df.iterrows():
-        # some bad stock may have empty "细分行业", filter them out
-        if not row[STOCK.INDUSTRY.showname] or str(row[STOCK.INDUSTRY.showname]).lower()=='nan':
-            print("will skip invalid row: " + str(row))
-            continue
+        # # some bad stock may have empty "细分行业", filter them out
+        # if not row[STOCK.INDUSTRY.showname] or str(row[STOCK.INDUSTRY.showname]).lower()=='nan':
+        #     print("will skip invalid row: " + str(row))
+        #     continue
         values = tuple(conv_null(row[k]) for k in keys)
         data.append(values)
     return data
@@ -122,8 +171,8 @@ def insert_stock(df):
 ####
 
 def delete_history(today):
+    conn = get_db_conn()
     try:
-        conn = get_db_conn()
         cursor = conn.cursor()
         cursor.execute("delete from HISTORY where TODAY=?", (today,))
         # cursor.close()
@@ -152,7 +201,7 @@ def insert_history(df):
 # 代码	名称	现价	涨幅%	涨速%	卖价	流通股(亿)	市盈(动)	换手%	细分行业
 # 相对流量%	大宗流量%	现量	开盘换手Z	连涨天	3日涨幅%	20日涨幅%	60日涨幅%	年初至今%	净流入	大宗流入	贝塔系数	每股收益	每股净资	每股公积	每股未分配	权益比%	净利润率%	研发费用(亿)	员工人数
 def insert_data(excelfilename, today):
-    df = read_excel_data(excelfilename, today)
+    df = read_data(excelfilename, today)
     
     # add into stock list if not exist
     insert_stock(df)
@@ -167,22 +216,28 @@ def insert_data(excelfilename, today):
     # 成交量 = 流通股 * 换手
     # 成交量 = 流入 + 流出
     # 相对流量 = (流入 - 流出) / 成交量
+    conn = get_db_conn()
     try:
-        conn = get_db_conn()
         cursor = conn.cursor()
         # 流通市值
         cursor.execute("update HISTORY set MARKETCAPITAL = PRICE * LISTSHARES where TODAY=?", (today,))
+
+        # 成交量
+        cursor.execute("update HISTORY set VOLUME = LISTSHARES * (TURNOVERRATE/100) where TODAY=?", (today,))
+
         # 成交额 流入额 流出额
-        cursor.execute("update HISTORY set TURNOVER = NETINFLOW / (RELATIVEFLOW/100) where TODAY=?", (today,))
+        cursor.execute("update HISTORY set TURNOVER = VOLUME * PRICE where TODAY=?", (today,))
+        # cursor.execute("update HISTORY set TURNOVER = NETINFLOW / (RELATIVEFLOW/100) where TODAY=?", (today,))
         cursor.execute("update HISTORY set INFLOW = (TURNOVER + NETINFLOW) / 2 where TODAY=?", (today,))
         cursor.execute("update HISTORY set OUTFLOW = (TURNOVER - NETINFLOW) / 2 where TODAY=?", (today,))
+
         # 成交量 流入量 流出量
-        # cursor.execute("update HISTORY set VOLUME = LISTSHARES * (TURNOVERRATE/100) where TODAY=?", (today,))
         # cursor.execute("update HISTORY set INFLOWSHARE = VOLUME * (1+RELATIVEFLOW/100) / 2 where TODAY=?", (today,))
         # cursor.execute("update HISTORY set OUTFLOWSHARE = VOLUME * (1-RELATIVEFLOW/100) / 2 where TODAY=?", (today,))
-        cursor.execute("update HISTORY set VOLUME = TURNOVER / PRICE where TODAY=?", (today,))
+        # cursor.execute("update HISTORY set VOLUME = TURNOVER / PRICE where TODAY=?", (today,))
         cursor.execute("update HISTORY set INFLOWSHARE = INFLOW / PRICE where TODAY=?", (today,))
         cursor.execute("update HISTORY set OUTFLOWSHARE = OUTFLOW / PRICE where TODAY=?", (today,))
+
         conn.commit()
     except:
         conn.rollback()

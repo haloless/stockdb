@@ -1,8 +1,7 @@
-
-'''DB schema
+"""DB schema
 - STOCK
 - HISTORY
-'''
+"""
 
 # from collections import namedtuple
 
@@ -62,12 +61,12 @@ class Table:
 ################################################################################
 
 class STOCK(Table):
-    '''STOCK table'''
+    """STOCK table"""
     SYMBOL = Field(showname='代码', dbname='Symbol', dbtype='char(10)', constraint='primary key not null')
     LOCALNAME = Field(showname='名称', dbname='LocalName', dbtype='text', constraint='not null')
     INDUSTRY = Field(showname='细分行业', dbname='Industry', dbtype='text', constraint='not null')
-    RDEXPENSE = Field(showname='研发费用(亿)', dbname='RDExpense', dbtype='real')
-    EMPLOYEENUM = Field(showname='员工人数', dbname='EmployeeNum', dbtype='real')
+    # RDEXPENSE = Field(showname='研发费用(亿)', dbname='RDExpense', dbtype='real')
+    # EMPLOYEENUM = Field(showname='员工人数', dbname='EmployeeNum', dbtype='real')
 ####
 
 # 代码	名称	现价	涨幅%	涨速%	卖价	流通股(亿)	市盈(动)	换手%	细分行业
@@ -78,9 +77,9 @@ class STOCK(Table):
 # 昨收	扣非净利润(亿)
 
 class HISTORY(Table):
-    '''HISTORY table
+    """HISTORY table
     净流入=流入量*价格
-    '''
+    """
     # primary fields
     TODAY       = Field(showname='日期', dbname='Today', dbtype='date', constraint='not null')
     SYMBOL      = Field(showname='代码', dbname='Symbol', dbtype='char(10)', constraint='not null')
@@ -95,6 +94,22 @@ class HISTORY(Table):
     BULKFLOW    = Field(showname='大宗流量%', dbname='BulkFlow', dbtype='real')
     NETINFLOW   = Field(showname='净流入', dbname='NetInflow', dbtype='real')
     BULKINFLOW  = Field(showname='大宗流入', dbname='BulkInflow', dbtype='real')
+    CURRENTFLOW = Field(showname='现量', dbname='CurrentFlow', dbtype='real')
+    RISESPEED   = Field(showname='涨速%', dbname="RiseSpeed", dbtype='real')
+    MAINNETINFLOW = Field(showname='主力净额', dbname='MainNetInflow', dbtype='real')
+    MAINRATIO   = Field(showname='主力占比%', dbname='MainRatio', dbtype='real')
+    AVERAGERISE = Field(showname='均涨幅%', dbname='AverageRise', dbtype='real')
+    OFFENSEWAVE = Field(showname='攻击波%', dbname='OffenseWave', dbtype='real')
+    CORRECTIVEWAVE = Field(showname='回头波%', dbname='CorrectiveWave', dbtype='real')
+    CONTRISEDAYS = Field(showname='连涨天', dbname='ContRiseDays', dbtype='int')
+    BUYSELLRATIO = Field(showname='内外比', dbname='BuySellRatio', dbtype='real')
+    QUANTITYRATIO = Field(showname='量比', dbname='QuantityRatio', dbtype='real')
+    RISEDAY10     = Field(showname='10日涨幅%', dbname='RiseDay10', dbtype='real')
+    RISEDAY60     = Field(showname='60日涨幅%', dbname='RiseDay60', dbtype='real')
+    RISEYEAR      = Field(showname='一年涨幅%', dbname='RiseDayYear', dbtype='real')
+    FROZENTRADERATIO = Field(showname='封成比', dbname='FrozenTradeRatio', dbtype='real')
+    NETASSETPERSHARE = Field(showname='每股净资', dbname='NetAssetPerShare', dbtype='real')
+    PRICEBOOKRATIO = Field(showname='市净率', dbname='PriceBookRatio', dbtype='real')
     # derived quantities
     MARKETCAPITAL = Field(showname='流通市值(亿)', dbname='MarketCapital', dbtype='real', derived=True)
     TURNOVER    = Field(showname='成交额(亿)', dbname='Turnover', dbtype='real', derived=True)
@@ -111,20 +126,15 @@ class HISTORY2(Table):
     #
     CLOSEPRICE = Field(showname='昨收', dbname='ClosePrice', dbtype='real')
     SELLPRICE = Field(showname='卖价', dbname='SellPrice', dbtype='real')
-    CURRENTFLOW = Field(showname='现量', dbname='CurrentFlow', dbtype='real')
-    RISESPEED = Field(showname='涨速%', dbname="RiseSpeed", dbtype='real')
     PRICEEARNRATIO = Field(showname='市盈(动)', dbname='PriceEarnRatio', dbtype='real')
 
     OPENTURNOVER = Field(showname='开盘换手Z', dbname='OpenTurnover', dbtype='real')
-    CONTRISEDAYS = Field(showname='连涨天', dbname='ContRiseDays', dbtype='int')
     RISEDAY3 = Field(showname='3日涨幅%', dbname='RiseDay3', dbtype='real')
     RISEDAY20 = Field(showname='20日涨幅%', dbname='RiseDay20', dbtype='real')
-    RISEDAY60 = Field(showname='60日涨幅%', dbname='RiseDay60', dbtype='real')
     RISEYEARBEGIN = Field(showname='年初至今%', dbname='RiseYearBegin', dbtype='real')
 
     BETACOEF = Field(showname='贝塔系数', dbname='BetaCoef', dbtype='real')
     EARNPERSHARE = Field(showname='每股收益', dbname='EarnPerShare', dbtype='real')
-    NETASSETPERSHARE = Field(showname='每股净资', dbname='NetAssetPerShare', dbtype='real')
     ADDPAIDINPERSHARE = Field(showname='每股公积', dbname='AddPaidInPerShare', dbtype='real')
     UNPAIDPERSHARE = Field(showname='每股未分配', dbname='UnpaidPerShare', dbtype='real')
     EQUITYRATIO = Field(showname='权益比%', dbname='EquityRatio', dbtype='real')
