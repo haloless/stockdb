@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基础统计</title>
+    <link rel="stylesheet" href="/stock2/css/main.css">
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <h1>基础统计</h1>
+        <a href="/stock2/index.html">返回首页</a>
+    </div>
+
+    <div class="panel filters">
+        <div>
+            <label for="symbolsInput">股票代码（逗号分隔）</label>
+            <input id="symbolsInput" type="text" placeholder="如 600545,002516">
+        </div>
+        <div>
+            <label for="industriesSelect">行业（可多选）</label>
+            <select id="industriesSelect" multiple size="6"></select>
+        </div>
+        <div>
+            <label for="startDate">开始日期</label>
+            <input id="startDate" type="date">
+        </div>
+        <div>
+            <label for="endDate">结束日期</label>
+            <input id="endDate" type="date">
+        </div>
+        <div>
+            <label for="groupBy">统计维度</label>
+            <select id="groupBy">
+                <option value="stock">按股票</option>
+                <option value="industry">按行业</option>
+            </select>
+        </div>
+        <div>
+            <button id="statsBtn" type="button">查询统计</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>统计结果</h2>
+        <div class="table-wrap">
+            <table id="statsTable">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="/stock2/js/main.js"></script>
+<script>
+    window.Stock2.initStatsPage();
+</script>
+</body>
+</html>

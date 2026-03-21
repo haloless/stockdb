@@ -1,5 +1,17 @@
 # stockdb
 
+Python project
+
+Purpose is for loading historical data of China stocks from csv-like files into database.
+Then provides convenient statistics functionality and plotting via Flask web UI.
+
+## Development
+
+Conda env of python 3.7 with Flask bundled.
+
+On windows - dev env should source activate script `%USERPROFILE%\Anaconda3\Scripts\activate.bat`
+
+
 # 安装
 
 1. 首先安装Python集成环境Anaconda（这个是现在金融数学分析的标准工具包集合）

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时序分析</title>
+    <link rel="stylesheet" href="/stock2/css/main.css">
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <h1>时序分析</h1>
+        <a href="/stock2/index.html">返回首页</a>
+    </div>
+
+    <div class="panel filters">
+        <div>
+            <label for="tsSymbolsInput">股票代码（逗号分隔）</label>
+            <input id="tsSymbolsInput" type="text" placeholder="如 600545,002516">
+        </div>
+        <div>
+            <label for="tsIndustriesSelect">行业（可多选）</label>
+            <select id="tsIndustriesSelect" multiple size="6"></select>
+        </div>
+        <div>
+            <label for="tsStartDate">开始日期</label>
+            <input id="tsStartDate" type="date">
+        </div>
+        <div>
+            <label for="tsEndDate">结束日期</label>
+            <input id="tsEndDate" type="date">
+        </div>
+        <div>
+            <label for="windowInput">滚动窗口（日）</label>
+            <input id="windowInput" type="number" min="1" value="1">
+        </div>
+        <div>
+            <label for="metricSelect">主展示指标</label>
+            <select id="metricSelect">
+                <option value="net_inflow_100m">净流入(亿元)</option>
+                <option value="relative_flow_pct">相对流量%</option>
+                <option value="large_flow_pct">大宗流量%</option>
+                <option value="turnover_amount_100m">成交额(亿元)</option>
+                <option value="inflow_amount_100m">流入额(亿元)</option>
+                <option value="outflow_amount_100m">流出额(亿元)</option>
+                <option value="trade_volume_100m">成交量(亿股)</option>
+            </select>
+        </div>
+        <div>
+            <button id="tsBtn" type="button">生成图表</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>趋势图</h2>
+        <div id="chart" class="chart-box"></div>
+    </div>
+
+    <div class="panel">
+        <h2>明细结果（前200行）</h2>
+        <div class="table-wrap">
+            <table id="timeseriesTable">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="/static/js/plotly-latest.min.js"></script>
+<script src="/stock2/js/main.js"></script>
+<script>
+    window.Stock2.initTimeseriesPage();
+</script>
+</body>
+</html>

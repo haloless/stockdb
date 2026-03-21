@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导入股票数据</title>
+    <link rel="stylesheet" href="/stock2/css/main.css">
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <h1>导入股票数据</h1>
+        <a href="/stock2/index.html">返回首页</a>
+    </div>
+
+    <div class="panel">
+        <label for="fileInput">选择文件（可多选）</label>
+        <input id="fileInput" type="file" multiple>
+        <button id="uploadBtn" type="button">执行导入</button>
+        <p class="hint">文件名需包含日期（yyyymmdd），例如：自选股20250911.xls</p>
+    </div>
+
+    <div class="panel">
+        <h2>导入结果</h2>
+        <pre id="uploadResult">尚未执行导入。</pre>
+    </div>
+</div>
+<script src="/stock2/js/main.js"></script>
+<script>
+    window.Stock2.initUploadPage();
+</script>
+</body>
+</html>

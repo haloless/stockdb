@@ -107,6 +107,7 @@ venv.bak/
 # project files
 .vscode
 test.db
+*.db
 
 .idea/
 
