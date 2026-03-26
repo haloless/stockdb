@@ -12,11 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent
 STATIC_STOCK2 = BASE_DIR / "static" / "stock2"
 
 app = Flask(__name__, static_folder="static")
-
-
-@app.before_first_request
-def _bootstrap() -> None:
-    init_db()
+# Flask 3.x removed before_first_request, so initialize schema eagerly.
+init_db()
 
 
 @app.route("/")

@@ -36,7 +36,7 @@
         var keys = Object.keys(rows[0]);
         var mapHeader = headerMapper || function (key) { return key; };
         thead.innerHTML = "<tr>" + keys.map(function (key) {
-            return "<th>" + mapHeader(key) + "</th>";
+            return '<th data-key="' + key + '">' + mapHeader(key) + '</th>';
         }).join("") + "</tr>";
 
         tbody.innerHTML = rows.map(function (row) {
@@ -82,6 +82,79 @@
         }
 
         return key;
+    }
+
+    function getStatsHeaderLabel(key) {
+        var labels = {
+            group_key: "分组键",
+            group_name: "名称",
+            days: "统计天数",
+            avg_net_inflow_100m: "平均净流入(亿元)",
+            cum_net_inflow_100m: "累计净流入(亿元)",
+            avg_relative_flow_pct: "平均相对流量%",
+            avg_large_flow_pct: "平均大宗流量%",
+            avg_turnover_amount_100m: "平均成交额(亿元)",
+            cum_turnover_amount_100m: "累计成交额(亿元)",
+            avg_trade_volume_100m: "平均成交量(亿股)",
+            cum_trade_volume_100m: "累计成交量(亿股)"
+        };
+
+        return labels[key] || key;
+    }
+
+    function sortRows(rows, sortState) {
+        if (!sortState || !sortState.key) {
+            return rows.slice();
+        }
+
+        var direction = sortState.direction === "desc" ? -1 : 1;
+        var key = sortState.key;
+
+        return rows.slice().sort(function (left, right) {
+            var leftValue = left[key];
+            var rightValue = right[key];
+
+            if (leftValue === null || leftValue === undefined) {
+                return rightValue === null || rightValue === undefined ? 0 : 1;
+            }
+            if (rightValue === null || rightValue === undefined) {
+                return -1;
+            }
+
+            if (typeof leftValue === "number" && typeof rightValue === "number") {
+                return (leftValue - rightValue) * direction;
+            }
+
+            return String(leftValue).localeCompare(String(rightValue), "zh-CN", {
+                numeric: true,
+                sensitivity: "base"
+            }) * direction;
+        });
+    }
+
+    function decorateSortableHeader(tableEl, sortState, headerMapper, onSortChange) {
+        var headerCells = tableEl.querySelectorAll("thead th");
+        Array.prototype.forEach.call(headerCells, function (cell) {
+            var key = cell.getAttribute("data-key");
+            if (!key) {
+                return;
+            }
+
+            var label = headerMapper(key);
+            if (sortState.key === key) {
+                label += sortState.direction === "desc" ? " ▼" : " ▲";
+            }
+
+            cell.textContent = label;
+            cell.style.cursor = "pointer";
+            cell.addEventListener("click", function () {
+                var nextDirection = "asc";
+                if (sortState.key === key && sortState.direction === "asc") {
+                    nextDirection = "desc";
+                }
+                onSortChange({key: key, direction: nextDirection});
+            });
+        });
     }
 
     function loadMeta(fillIndustrySelects, fillDateDefaults) {
@@ -145,6 +218,17 @@
         var groupBy = document.getElementById("groupBy");
         var statsBtn = document.getElementById("statsBtn");
         var table = document.getElementById("statsTable");
+        var statsRows = [];
+        var statsSortState = {key: null, direction: "asc"};
+
+        function renderStatsTable() {
+            var rows = sortRows(statsRows, statsSortState);
+            renderTable(table, rows, getStatsHeaderLabel);
+            decorateSortableHeader(table, statsSortState, getStatsHeaderLabel, function (nextSortState) {
+                statsSortState = nextSortState;
+                renderStatsTable();
+            });
+        }
 
         loadMeta([industriesSelect], function (start, end) {
             startDate.value = start || "";
@@ -163,7 +247,9 @@
             fetch("/api2/stats?" + q)
                 .then(function (resp) { return resp.json(); })
                 .then(function (result) {
-                    renderTable(table, result.rows || []);
+                    statsRows = result.rows || [];
+                    statsSortState = {key: null, direction: "asc"};
+                    renderStatsTable();
                 });
         });
     }

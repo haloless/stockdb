@@ -10,12 +10,21 @@
 - Prefer list comprehensions and generator expressions where appropriate.
 - Avoid global variables unless necessary.
 
+## Project structure
+
+`stockdb` was the original implementation, which should be kept for reference and comparison.
+
+The new implementation is in `stockdb2`, which should be the focus of development and improvements with benefit using copilot.
+
+
 ## Dev env
 
-On windows - dev env should source activate script `%USERPROFILE%\Anaconda3\Scripts\activate.bat`
+On Windows - dev env should source activate script `%USERPROFILE%\Anaconda3\Scripts\activate.bat`
 Do not try to alter the env.
 All functionality and dependency should be available in above Conda env.
 Otherwise user may have difficulty to run the project.
+
+On Mac - dev env should activate the virtual env under `./myenv/bin/activate`.
 
 
 ## Testing

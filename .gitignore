@@ -109,7 +109,13 @@ venv.bak/
 test.db
 *.db
 
+# virtual env
+myenv/
+
 .idea/
+
+.DS_Store
+
 
 # ignore gui code at the moment...
 stockdb/dbgui
