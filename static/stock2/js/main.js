@@ -176,7 +176,34 @@
                 if (fillDateDefaults && meta.date_range) {
                     fillDateDefaults(meta.date_range.start, meta.date_range.end);
                 }
+
+                return meta;
             });
+    }
+
+    function renderIndustrySelect(selectEl, industries, keyword) {
+        if (!selectEl) {
+            return;
+        }
+
+        var selectedSet = {};
+        Array.prototype.forEach.call(selectEl.options, function (opt) {
+            if (opt.selected) {
+                selectedSet[opt.value] = true;
+            }
+        });
+
+        var text = (keyword || "").trim().toLowerCase();
+        var filtered = (industries || []).filter(function (item) {
+            return !text || String(item).toLowerCase().indexOf(text) !== -1;
+        });
+
+        var options = ['<option value="" selected>不限行业（全部）</option>'];
+        filtered.forEach(function (item) {
+            var selectedAttr = selectedSet[item] ? " selected" : "";
+            options.push('<option value="' + item + '"' + selectedAttr + '>' + item + '</option>');
+        });
+        selectEl.innerHTML = options.join("");
     }
 
     function initUploadPage() {
@@ -256,6 +283,7 @@
 
     function initTimeseriesPage() {
         var symbolsInput = document.getElementById("tsSymbolsInput");
+        var industrySearchInput = document.getElementById("tsIndustrySearch");
         var industriesSelect = document.getElementById("tsIndustriesSelect");
         var startDate = document.getElementById("tsStartDate");
         var endDate = document.getElementById("tsEndDate");
@@ -263,11 +291,23 @@
         var metricSelect = document.getElementById("metricSelect");
         var tsBtn = document.getElementById("tsBtn");
         var table = document.getElementById("timeseriesTable");
+        var allIndustries = [];
+
+        function applyIndustrySearch() {
+            renderIndustrySelect(industriesSelect, allIndustries, industrySearchInput ? industrySearchInput.value : "");
+        }
 
         loadMeta([industriesSelect], function (start, end) {
             startDate.value = start || "";
             endDate.value = end || "";
+        }).then(function (meta) {
+            allIndustries = (meta && meta.industries) ? meta.industries.slice() : [];
+            applyIndustrySearch();
         });
+
+        if (industrySearchInput) {
+            industrySearchInput.addEventListener("input", applyIndustrySearch);
+        }
 
         tsBtn.addEventListener("click", function () {
             var metric = metricSelect.value;
