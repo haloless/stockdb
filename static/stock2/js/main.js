@@ -72,6 +72,7 @@
 
         var avgSuffix = "_roll_avg";
         var sumSuffix = "_roll_sum";
+        var cumSuffix = "_cum";
         if (key.endsWith(avgSuffix)) {
             var avgBase = key.slice(0, -avgSuffix.length);
             return (labels[avgBase] || avgBase) + "(滚动均值)";
@@ -80,8 +81,22 @@
             var sumBase = key.slice(0, -sumSuffix.length);
             return (labels[sumBase] || sumBase) + "(滚动累计)";
         }
+        if (key.endsWith(cumSuffix)) {
+            var cumBase = key.slice(0, -cumSuffix.length);
+            return (labels[cumBase] || cumBase) + "(累计)";
+        }
 
         return key;
+    }
+
+    function getChartMetricKey(metric, window, useCumulative) {
+        if (useCumulative) {
+            return metric + "_cum";
+        }
+        if (window > 1) {
+            return metric + "_roll_avg";
+        }
+        return metric;
     }
 
     function getStatsHeaderLabel(key) {
@@ -289,6 +304,7 @@
         var endDate = document.getElementById("tsEndDate");
         var windowInput = document.getElementById("windowInput");
         var metricSelect = document.getElementById("metricSelect");
+        var cumulativeToggle = document.getElementById("cumulativeToggle");
         var tsBtn = document.getElementById("tsBtn");
         var table = document.getElementById("timeseriesTable");
         var allIndustries = [];
@@ -325,14 +341,15 @@
                 .then(function (result) {
                     var rows = result.rows || [];
                     renderTable(table, rows.slice(0, 200), getTimeseriesHeaderLabel);
-                    renderChart(rows, metric, Number(windowInput.value || "1"));
+                    renderChart(rows, metric, Number(windowInput.value || "1"), Boolean(cumulativeToggle && cumulativeToggle.checked));
                 });
         });
     }
 
-    function renderChart(rows, metric, window) {
+    function renderChart(rows, metric, window, useCumulative) {
         var grouped = {};
         var namesBySymbol = {};
+        var yKey = getChartMetricKey(metric, window, useCumulative);
         rows.forEach(function (row) {
             if (!grouped[row.symbol]) {
                 grouped[row.symbol] = [];
@@ -345,7 +362,6 @@
 
         var traces = Object.keys(grouped).map(function (symbol) {
             var series = grouped[symbol];
-            var yKey = window > 1 ? metric + "_roll_avg" : metric;
             var stockName = namesBySymbol[symbol] || "";
             var legendLabel = stockName ? (symbol + " " + stockName) : symbol;
             return {
@@ -359,7 +375,7 @@
         Plotly.newPlot("chart", traces, {
             margin: {t: 30, r: 20, b: 50, l: 60},
             xaxis: {},
-            yaxis: {title: metric + (window > 1 ? " (滚动均值)" : "")},
+            yaxis: {title: getTimeseriesHeaderLabel(yKey)},
             legend: {orientation: "h"}
         }, {responsive: true});
     }

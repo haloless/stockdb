@@ -104,6 +104,9 @@ def query_timeseries(args) -> Dict[str, object]:
     finally:
         conn.close()
 
+    if rows:
+        rows = _attach_cumulative(rows, metrics)
+
     if window > 1 and rows:
         rows = _attach_rolling(rows, metrics, window)
 
@@ -201,6 +204,31 @@ def _attach_rolling(rows: List[Dict[str, object]], metrics: List[str], window: i
             for idx, roll in enumerate(rolls):
                 symbol_rows[idx][f"{metric}_roll_avg"] = roll["avg"]
                 symbol_rows[idx][f"{metric}_roll_sum"] = roll["sum"]
+        updated_rows.extend(symbol_rows)
+
+    updated_rows.sort(key=lambda item: (item["symbol"], item["date"]))
+    return updated_rows
+
+
+def _attach_cumulative(rows: List[Dict[str, object]], metrics: List[str]) -> List[Dict[str, object]]:
+    grouped: Dict[str, List[Dict[str, object]]] = defaultdict(list)
+    for row in rows:
+        symbol = str(row.get("symbol", ""))
+        grouped[symbol].append(row)
+
+    updated_rows: List[Dict[str, object]] = []
+    for symbol, symbol_rows in grouped.items():
+        for metric in metrics:
+            running_sum = 0.0
+            has_value = False
+            for item in symbol_rows:
+                value = item.get(metric)
+                if isinstance(value, (int, float)):
+                    running_sum += float(value)
+                    has_value = True
+                    item[f"{metric}_cum"] = running_sum
+                else:
+                    item[f"{metric}_cum"] = running_sum if has_value else None
         updated_rows.extend(symbol_rows)
 
     updated_rows.sort(key=lambda item: (item["symbol"], item["date"]))
