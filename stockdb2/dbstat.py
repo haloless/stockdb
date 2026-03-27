@@ -71,7 +71,8 @@ def query_timeseries(args) -> Dict[str, object]:
             date, symbol, name, industry,
             net_inflow_100m, relative_flow_pct, large_flow_pct,
             turnover_amount_100m, inflow_amount_100m, outflow_amount_100m,
-            trade_volume_100m, large_inflow_100m
+            trade_volume_100m, large_inflow_100m,
+            free_float_market_cap_100m
         FROM daily_metrics
     """
     where_clauses = []

@@ -55,6 +55,13 @@
             </label>
         </div>
         <div>
+            <label for="relativeValueToggle">相对值</label>
+            <label class="inline-check" for="relativeValueToggle">
+                <input id="relativeValueToggle" type="checkbox" checked>
+                相对于流通市值
+            </label>
+        </div>
+        <div>
             <button id="tsBtn" type="button">生成图表</button>
         </div>
     </div>
@@ -62,6 +69,9 @@
     <div class="panel">
         <h2>趋势图</h2>
         <div id="chart" class="chart-box"></div>
+        <div class="chart-actions">
+            <button id="exportCsvBtn" type="button">导出文件</button>
+        </div>
     </div>
 
     <div class="panel">

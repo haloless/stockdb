@@ -305,9 +305,12 @@
         var windowInput = document.getElementById("windowInput");
         var metricSelect = document.getElementById("metricSelect");
         var cumulativeToggle = document.getElementById("cumulativeToggle");
+        var relativeValueToggle = document.getElementById("relativeValueToggle");
         var tsBtn = document.getElementById("tsBtn");
+        var exportCsvBtn = document.getElementById("exportCsvBtn");
         var table = document.getElementById("timeseriesTable");
         var allIndustries = [];
+        var currentChartData = null;
 
         function applyIndustrySearch() {
             renderIndustrySelect(industriesSelect, allIndustries, industrySearchInput ? industrySearchInput.value : "");
@@ -327,6 +330,10 @@
 
         tsBtn.addEventListener("click", function () {
             var metric = metricSelect.value;
+            var windowValue = Number(windowInput.value || "1");
+            var useCumulative = Boolean(cumulativeToggle && cumulativeToggle.checked);
+            var useRelativeValue = Boolean(relativeValueToggle && relativeValueToggle.checked);
+            
             var q = buildQuery({
                 symbols: symbolsInput.value.trim(),
                 industries: selectedValues(industriesSelect).join(","),
@@ -341,12 +348,102 @@
                 .then(function (result) {
                     var rows = result.rows || [];
                     renderTable(table, rows.slice(0, 200), getTimeseriesHeaderLabel);
-                    renderChart(rows, metric, Number(windowInput.value || "1"), Boolean(cumulativeToggle && cumulativeToggle.checked));
+                    renderChart(rows, metric, windowValue, useCumulative, useRelativeValue);
+                    
+                    // Store chart data for export
+                    currentChartData = {
+                        rows: rows,
+                        metric: metric,
+                        window: windowValue,
+                        useCumulative: useCumulative,
+                        useRelativeValue: useRelativeValue
+                    };
                 });
         });
+
+        exportCsvBtn.addEventListener("click", function () {
+            if (!currentChartData) {
+                alert("请先生成图表数据");
+                return;
+            }
+            
+            var csvContent = convertChartDataToCsv(currentChartData);
+            downloadCsv(csvContent, "stock_timeseries_data.csv");
+        });
+
+        function convertChartDataToCsv(chartData) {
+            var rows = chartData.rows;
+            var metric = chartData.metric;
+            var window = chartData.window;
+            var useCumulative = chartData.useCumulative;
+            var useRelativeValue = chartData.useRelativeValue;
+            
+            var yKey = getChartMetricKey(metric, window, useCumulative);
+            
+            // Group data by symbol
+            var grouped = {};
+            var dates = [];
+            var stockInfo = []; // Array of {symbol, name} objects
+            
+            rows.forEach(function (row) {
+                if (!grouped[row.symbol]) {
+                    grouped[row.symbol] = {};
+                    stockInfo.push({symbol: row.symbol, name: row.name || row.symbol});
+                }
+                grouped[row.symbol][row.date] = row;
+                if (dates.indexOf(row.date) === -1) {
+                    dates.push(row.date);
+                }
+            });
+            
+            // Sort dates
+            dates.sort();
+            
+            // Build CSV header
+            var header = ["日期"];
+            stockInfo.forEach(function (stock) {
+                header.push(stock.symbol + " " + stock.name);
+            });
+            
+            // Build CSV rows
+            var csvRows = [header.join(",")];
+            
+            dates.forEach(function (date) {
+                var row = [date];
+                stockInfo.forEach(function (stock) {
+                    var dataRow = grouped[stock.symbol][date];
+                    if (dataRow) {
+                        var value = dataRow[yKey];
+                        if (useRelativeValue && dataRow.free_float_market_cap_100m && dataRow.free_float_market_cap_100m > 0) {
+                            value = value / dataRow.free_float_market_cap_100m;
+                        }
+                        row.push(value || "");
+                    } else {
+                        row.push("");
+                    }
+                });
+                csvRows.push(row.join(","));
+            });
+            
+            return csvRows.join("\n");
+        }
+
+        function downloadCsv(content, filename) {
+            var blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+            var link = document.createElement("a");
+            if (link.download !== undefined) {
+                var url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
     }
 
-    function renderChart(rows, metric, window, useCumulative) {
+    function renderChart(rows, metric, window, useCumulative, useRelativeValue) {
         var grouped = {};
         var namesBySymbol = {};
         var yKey = getChartMetricKey(metric, window, useCumulative);
@@ -364,18 +461,30 @@
             var series = grouped[symbol];
             var stockName = namesBySymbol[symbol] || "";
             var legendLabel = stockName ? (symbol + " " + stockName) : symbol;
+            var yValues = series.map(function (r) {
+                var value = r[yKey];
+                if (useRelativeValue && r.free_float_market_cap_100m && r.free_float_market_cap_100m > 0) {
+                    return value / r.free_float_market_cap_100m;
+                }
+                return value;
+            });
             return {
                 name: legendLabel,
                 mode: "lines+markers",
                 x: series.map(function (r) { return r.date; }),
-                y: series.map(function (r) { return r[yKey]; })
+                y: yValues
             };
         });
+
+        var yLabel = getTimeseriesHeaderLabel(yKey);
+        if (useRelativeValue) {
+            yLabel = yLabel + "(相对值)";
+        }
 
         Plotly.newPlot("chart", traces, {
             margin: {t: 30, r: 20, b: 50, l: 60},
             xaxis: {},
-            yaxis: {title: getTimeseriesHeaderLabel(yKey)},
+            yaxis: {title: yLabel},
             legend: {orientation: "h"}
         }, {responsive: true});
     }
