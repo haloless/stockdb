@@ -8,6 +8,7 @@ from .dbutils import (
     infer_date_from_filename,
     to_amount_100m,
     to_float,
+    to_net_inflow_100m,
     to_nullable_text,
     parse_table_from_bytes,
 )
@@ -90,7 +91,7 @@ def _normalize_row(row: Dict[str, object], target_date: str, source_filename: st
     name = to_nullable_text(row.get("名称"))
     industry = to_nullable_text(row.get("细分行业")) or "ETF"
 
-    net_inflow_100m = to_amount_100m(row.get("主力净额"))
+    net_inflow_100m = to_net_inflow_100m(row.get("主力净额"))
     relative_flow_pct = to_float(row.get("主力占比%"))
     large_flow_pct = to_float(row.get("攻击波%"))
     price = to_float(row.get("现价"))

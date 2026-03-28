@@ -26,6 +26,13 @@ class TestStockdb2Utils(unittest.TestCase):
         self.assertAlmostEqual(to_amount_100m("2500万"), 0.25)
         self.assertAlmostEqual(to_amount_100m("0.5"), 0.5)
 
+    def test_to_net_inflow_100m(self):
+        from stockdb2.dbutils import to_net_inflow_100m
+        self.assertAlmostEqual(to_net_inflow_100m("1.5亿"), 1.5)       # 1.5亿 = 1.5亿
+        self.assertAlmostEqual(to_net_inflow_100m("2500万"), 0.25)      # 2500万 = 0.25亿
+        self.assertAlmostEqual(to_net_inflow_100m("150"), 0.015)        # 150万 = 0.015亿
+        self.assertAlmostEqual(to_net_inflow_100m("150万"), 0.015)      # 150万 = 0.015亿
+
     def test_rolling_stats(self):
         values = [1.0, 2.0, 3.0, 4.0]
         result = rolling_stats(values, 2)

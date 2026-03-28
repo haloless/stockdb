@@ -67,14 +67,14 @@ def to_float(raw_value: object) -> Optional[float]:
         return None
 
 
-def to_amount_100m(raw_value: object) -> Optional[float]:
-    """Convert Chinese amount text to amount in 100 million yuan (亿元)."""
+def _to_amount_100m_helper(raw_value: object, default_multiplier: float) -> Optional[float]:
+    """Helper function to convert Chinese amount text to amount in 100 million yuan (亿元)."""
     text = to_nullable_text(raw_value)
     if text is None:
         return None
 
     text = text.replace(",", "")
-    multiplier = 1.0
+    multiplier = default_multiplier
     if text.endswith("亿"):
         text = text[:-1]
         multiplier = 1.0
@@ -86,6 +86,16 @@ def to_amount_100m(raw_value: object) -> Optional[float]:
         return float(text) * multiplier
     except ValueError:
         return None
+
+
+def to_amount_100m(raw_value: object) -> Optional[float]:
+    """Convert Chinese amount text to amount in 100 million yuan (亿元)."""
+    return _to_amount_100m_helper(raw_value, default_multiplier=1.0)  # Default to 亿 (100,000,000) when no unit specified
+
+
+def to_net_inflow_100m(raw_value: object) -> Optional[float]:
+    """Convert main net inflow text to amount in 100 million yuan (亿元), default unit is 万 (10,000)."""
+    return _to_amount_100m_helper(raw_value, default_multiplier=0.0001)  # Default to 万 (10,000) when no unit specified
 
 
 def parse_table_from_bytes(file_bytes: bytes) -> List[Dict[str, object]]:

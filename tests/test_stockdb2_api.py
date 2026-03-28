@@ -98,9 +98,9 @@ class TestStockdb2Api(unittest.TestCase):
         rows = cast(List[Dict[str, object]], ts_data["rows"])
 
         self.assertEqual(len(rows), 3)
-        self.assertAlmostEqual(float(rows[0]["net_inflow_100m_cum"]), 10.0)
-        self.assertAlmostEqual(float(rows[1]["net_inflow_100m_cum"]), 8.0)
-        self.assertAlmostEqual(float(rows[2]["net_inflow_100m_cum"]), 13.0)
+        self.assertAlmostEqual(float(rows[0]["net_inflow_100m_cum"]), 0.001)  # 10万 = 0.001亿
+        self.assertAlmostEqual(float(rows[1]["net_inflow_100m_cum"]), 0.0008)  # (10万 - 2万) = 8万 = 0.0008亿
+        self.assertAlmostEqual(float(rows[2]["net_inflow_100m_cum"]), 0.0013)  # (8万 + 5万) = 13万 = 0.0013亿
 
 
 if __name__ == "__main__":
