@@ -42,7 +42,25 @@
             return;
         }
 
-        var keys = Object.keys(rows[0]);
+        // Get all keys and prioritize group_key and group_name at the beginning
+        var allKeys = Object.keys(rows[0]);
+        var keys = [];
+        
+        // Add group_key and group_name first if they exist
+        if (allKeys.includes("group_key")) {
+            keys.push("group_key");
+        }
+        if (allKeys.includes("group_name")) {
+            keys.push("group_name");
+        }
+        
+        // Add remaining keys
+        allKeys.forEach(function(key) {
+            if (key !== "group_key" && key !== "group_name") {
+                keys.push(key);
+            }
+        });
+        
         var mapHeader = headerMapper || function (key) { return key; };
         thead.innerHTML = "<tr>" + keys.map(function (key) {
             return '<th data-key="' + key + '">' + mapHeader(key) + '</th>';
@@ -113,14 +131,12 @@
             group_key: "分组键",
             group_name: "名称",
             days: "统计天数",
-            avg_net_inflow_100m: "平均净流入(亿元)",
             cum_net_inflow_100m: "累计净流入(亿元)",
-            avg_relative_flow_pct: "平均相对流量%",
-            avg_large_flow_pct: "平均大宗流量%",
-            avg_turnover_amount_100m: "平均成交额(亿元)",
+            cum_net_inflow_rel: "累计净流入相对值%",
             cum_turnover_amount_100m: "累计成交额(亿元)",
-            avg_trade_volume_100m: "平均成交量(亿股)",
-            cum_trade_volume_100m: "累计成交量(亿股)"
+            cum_turnover_rel: "累计成交额相对值%",
+            cum_trade_volume_100m: "累计成交量(亿股)",
+            cum_volume_rel: "累计成交量相对值%"
         };
 
         return labels[key] || key;

@@ -120,7 +120,7 @@ def query_timeseries(args) -> Dict[str, object]:
 
 
 def query_stats(args) -> Dict[str, object]:
-    """Query aggregated average and cumulative stats by stock or industry."""
+    """Query aggregated cumulative stats by stock or industry with relative values."""
     symbols = parse_csv_values(args.get("symbols"))
     industries = parse_csv_values(args.get("industries"))
     start_date = args.get("start_date")
@@ -133,18 +133,14 @@ def query_stats(args) -> Dict[str, object]:
     dimension = "industry" if group_by == "industry" else "symbol"
     dimension_name = "industry" if group_by == "industry" else "name"
 
+    # Query cumulative stats
     sql = f"""
         SELECT
             {dimension} AS group_key,
             {dimension_name} AS group_name,
             COUNT(*) AS days,
-            AVG(net_inflow_100m) AS avg_net_inflow_100m,
             SUM(net_inflow_100m) AS cum_net_inflow_100m,
-            AVG(relative_flow_pct) AS avg_relative_flow_pct,
-            AVG(large_flow_pct) AS avg_large_flow_pct,
-            AVG(turnover_amount_100m) AS avg_turnover_amount_100m,
             SUM(turnover_amount_100m) AS cum_turnover_amount_100m,
-            AVG(trade_volume_100m) AS avg_trade_volume_100m,
             SUM(trade_volume_100m) AS cum_trade_volume_100m
         FROM daily_metrics
     """
@@ -175,6 +171,87 @@ def query_stats(args) -> Dict[str, object]:
     conn = get_connection()
     try:
         rows = [dict(row) for row in conn.execute(sql, params)]
+        
+        # Get last date's data for each group to calculate relative values
+        if rows:
+            # Create a list of group keys
+            group_keys = [row["group_key"] for row in rows]
+            
+            # Query last date for each group
+            placeholder = ",".join(["?"] * len(group_keys))
+            
+            # Build dynamic WHERE clauses for date range
+            date_conditions = []
+            last_date_params = group_keys.copy()
+            
+            if start_date:
+                date_conditions.append(f"date >= ?")
+                last_date_params.append(start_date)
+            
+            if end_date:
+                date_conditions.append(f"date <= ?")
+                last_date_params.append(end_date)
+            
+            # Construct the full WHERE clause
+            where_clause = f"{dimension} IN ({placeholder})"
+            if date_conditions:
+                where_clause += " AND " + " AND ".join(date_conditions)
+            
+            last_date_sql = f"""
+                SELECT DISTINCT
+                    {dimension} AS group_key,
+                    date,
+                    free_float_market_cap_100m,
+                    free_float_shares_100m
+                FROM daily_metrics
+                WHERE {where_clause}
+                ORDER BY {dimension}, date DESC
+            """
+            
+            last_date_rows = list(conn.execute(last_date_sql, last_date_params))
+            
+            # Create a dictionary to map group_key to last date's data
+            last_date_data = {}
+            current_group = None
+            for row in last_date_rows:
+                row_dict = dict(row)
+                if row_dict["group_key"] != current_group:
+                    last_date_data[row_dict["group_key"]] = row_dict
+                    current_group = row_dict["group_key"]
+            
+            # Calculate relative values for each row
+            for row in rows:
+                group_key = row["group_key"]
+                last_data = last_date_data.get(group_key, {})
+                
+                # Get last date's values
+                last_market_cap = last_data.get("free_float_market_cap_100m")
+                last_shares = last_data.get("free_float_shares_100m")
+                
+                # Get cumulative values
+                cum_net_inflow = row.get("cum_net_inflow_100m")
+                cum_turnover = row.get("cum_turnover_amount_100m")
+                cum_volume = row.get("cum_trade_volume_100m")
+                
+                # Calculate relative values with proper None and zero checks
+                if (last_market_cap is not None and last_market_cap > 0 and 
+                    cum_net_inflow is not None):
+                    row["cum_net_inflow_rel"] = cum_net_inflow / last_market_cap * 100
+                else:
+                    row["cum_net_inflow_rel"] = None
+                
+                if (last_market_cap is not None and last_market_cap > 0 and 
+                    cum_turnover is not None):
+                    row["cum_turnover_rel"] = cum_turnover / last_market_cap * 100
+                else:
+                    row["cum_turnover_rel"] = None
+                
+                if (last_shares is not None and last_shares > 0 and 
+                    cum_volume is not None):
+                    row["cum_volume_rel"] = cum_volume / last_shares * 100
+                else:
+                    row["cum_volume_rel"] = None
+                
     finally:
         conn.close()
 
