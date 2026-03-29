@@ -10,6 +10,15 @@
         return searchParams.toString();
     }
 
+    // Format dates as yyyy-mm-dd
+    function formatDate(dateString) {
+        var date = new Date(dateString);
+        var year = date.getFullYear();
+        var month = String(date.getMonth() + 1).padStart(2, '0');
+        var day = String(date.getDate()).padStart(2, '0');
+        return year + '-' + month + '-' + day;
+    }
+
     function selectedValues(selectEl) {
         return Array.prototype.slice.call(selectEl.options)
             .filter(function (opt) { return opt.selected; })
@@ -409,7 +418,7 @@
             var csvRows = [header.join(",")];
             
             dates.forEach(function (date) {
-                var row = [date];
+                var row = [formatDate(date)];
                 stockInfo.forEach(function (stock) {
                     var dataRow = grouped[stock.symbol][date];
                     if (dataRow) {
@@ -417,7 +426,7 @@
                         if (useRelativeValue && dataRow.free_float_market_cap_100m && dataRow.free_float_market_cap_100m > 0) {
                             value = value / dataRow.free_float_market_cap_100m;
                         }
-                        row.push(value || "");
+                        row.push(value);
                     } else {
                         row.push("");
                     }
@@ -471,7 +480,7 @@
             return {
                 name: legendLabel,
                 mode: "lines+markers",
-                x: series.map(function (r) { return r.date; }),
+                x: series.map(function (r) { return formatDate(r.date); }),
                 y: yValues
             };
         });
@@ -483,7 +492,10 @@
 
         Plotly.newPlot("chart", traces, {
             margin: {t: 30, r: 20, b: 50, l: 60},
-            xaxis: {},
+            xaxis: {
+                tickformat: '%Y-%m-%d', // Plotly format for consistency
+                dtick: "D1",           // Set tick interval to exactly 1 day
+            },
             yaxis: {title: yLabel},
             legend: {orientation: "h"}
         }, {responsive: true});
