@@ -36,16 +36,37 @@
             <input id="windowInput" type="number" min="1" value="1">
         </div>
         <div>
-            <label for="metricSelect">主展示指标</label>
-            <select id="metricSelect">
-                <option value="net_inflow_100m">净流入(亿元)</option>
-                <option value="relative_flow_pct">相对流量%</option>
-                <option value="large_flow_pct">大宗流量%</option>
-                <option value="turnover_amount_100m">成交额(亿元)</option>
-                <option value="inflow_amount_100m">流入额(亿元)</option>
-                <option value="outflow_amount_100m">流出额(亿元)</option>
-                <option value="trade_volume_100m">成交量(亿股)</option>
-            </select>
+            <label>主展示指标</label>
+            <div id="metricCheckboxes" style="margin-left: 20px;">
+                <label class="inline-check" for="metric_net_inflow" style="display: block; margin-bottom: 5px;">
+                    <input id="metric_net_inflow" type="checkbox" value="net_inflow_100m" checked>
+                    净流入(亿元)
+                </label>
+                <label class="inline-check" for="metric_relative_flow" style="display: block; margin-bottom: 5px;">
+                    <input id="metric_relative_flow" type="checkbox" value="relative_flow_pct">
+                    相对流量%
+                </label>
+                <label class="inline-check" for="metric_large_flow" style="display: block; margin-bottom: 5px;">
+                    <input id="metric_large_flow" type="checkbox" value="large_flow_pct">
+                    大宗流量%
+                </label>
+                <label class="inline-check" for="metric_turnover" style="display: block; margin-bottom: 5px;">
+                    <input id="metric_turnover" type="checkbox" value="turnover_amount_100m">
+                    成交额(亿元)
+                </label>
+                <label class="inline-check" for="metric_inflow" style="display: block; margin-bottom: 5px;">
+                    <input id="metric_inflow" type="checkbox" value="inflow_amount_100m">
+                    流入额(亿元)
+                </label>
+                <label class="inline-check" for="metric_outflow" style="display: block; margin-bottom: 5px;">
+                    <input id="metric_outflow" type="checkbox" value="outflow_amount_100m">
+                    流出额(亿元)
+                </label>
+                <label class="inline-check" for="metric_volume" style="display: block;">
+                    <input id="metric_volume" type="checkbox" value="trade_volume_100m">
+                    成交量(亿股)
+                </label>
+            </div>
         </div>
         <div>
             <label for="cumulativeToggle">图表模式</label>
