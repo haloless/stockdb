@@ -42,21 +42,29 @@
             return;
         }
 
-        // Get all keys and prioritize group_key and group_name at the beginning
+        // Get all keys and prioritize key columns at the beginning
         var allKeys = Object.keys(rows[0]);
         var keys = [];
         
-        // Add group_key and group_name first if they exist
+        // Priority columns for different tables
+        // Stats table: group_key, group_name
+        // Timeseries table: symbol, name
         if (allKeys.includes("group_key")) {
             keys.push("group_key");
         }
         if (allKeys.includes("group_name")) {
             keys.push("group_name");
         }
+        if (allKeys.includes("symbol")) {
+            keys.push("symbol");
+        }
+        if (allKeys.includes("name")) {
+            keys.push("name");
+        }
         
         // Add remaining keys
         allKeys.forEach(function(key) {
-            if (key !== "group_key" && key !== "group_name") {
+            if (!keys.includes(key)) {
                 keys.push(key);
             }
         });
@@ -90,7 +98,9 @@
             inflow_amount_100m: "流入额(亿元)",
             outflow_amount_100m: "流出额(亿元)",
             trade_volume_100m: "成交量(亿股)",
-            large_inflow_100m: "大宗流入(亿元)"
+            large_inflow_100m: "大宗流入(亿元)",
+            free_float_market_cap_100m: "流通市值(亿元)",
+            free_float_shares_100m: "流通股(亿股)"
         };
 
         if (labels[key]) {
