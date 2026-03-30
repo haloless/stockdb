@@ -293,6 +293,7 @@
         var startDate = document.getElementById("startDate");
         var endDate = document.getElementById("endDate");
         var groupBy = document.getElementById("groupBy");
+        var positiveDays = document.getElementById("positiveDays");
         var statsBtn = document.getElementById("statsBtn");
         var table = document.getElementById("statsTable");
         var statsRows = [];
@@ -313,13 +314,21 @@
         });
 
         statsBtn.addEventListener("click", function () {
-            var q = buildQuery({
+            var queryParams = {
                 symbols: symbolsInput.value.trim(),
                 industries: selectedValues(industriesSelect).join(","),
                 start_date: startDate.value,
                 end_date: endDate.value,
                 group_by: groupBy.value
-            });
+            };
+            
+            // Add positive days filter if value is provided
+            var positiveDaysValue = positiveDays.value;
+            if (positiveDaysValue && !isNaN(positiveDaysValue) && Number(positiveDaysValue) > 0) {
+                queryParams.positive_days = positiveDaysValue;
+            }
+            
+            var q = buildQuery(queryParams);
 
             fetch("/api2/stats?" + q)
                 .then(function (resp) { return resp.json(); })

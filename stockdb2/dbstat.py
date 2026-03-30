@@ -267,12 +267,96 @@ def query_stats(args) -> Dict[str, object]:
     start_date = args.get("start_date")
     end_date = args.get("end_date")
     group_by = args.get("group_by", "stock")
+    
+    # Handle positive days filter parameter
+    positive_days = args.get("positive_days")
+    positive_days = int(positive_days) if positive_days and positive_days.isdigit() else None
 
     if group_by not in ("stock", "industry"):
         group_by = "stock"
 
     dimension = "industry" if group_by == "industry" else "symbol"
     dimension_name = "industry" if group_by == "industry" else "name"
+    
+    # Handle positive days filter if specified
+    filtered_symbols = None
+    
+    if positive_days and group_by == "stock":
+        # First, get all symbols that have N consecutive positive days ending at end_date
+        conn = get_connection()
+        try:
+            # Query all symbols and their daily data to check consecutive days
+            daily_sql = """
+                SELECT symbol, date, net_inflow_100m
+                FROM daily_metrics
+            """
+            
+            where_clauses = []
+            daily_params = []
+            
+            if symbols:
+                where_clauses.append(f"symbol IN ({','.join(['?'] * len(symbols))})")
+                daily_params.extend(symbols)
+            
+            if industries:
+                where_clauses.append(f"industry IN ({','.join(['?'] * len(industries))})")
+                daily_params.extend(industries)
+            
+            if start_date:
+                where_clauses.append("date >= ?")
+                daily_params.append(start_date)
+            
+            if end_date:
+                where_clauses.append("date <= ?")
+                daily_params.append(end_date)
+            
+            if where_clauses:
+                daily_sql += " WHERE " + " AND ".join(where_clauses)
+            
+            daily_sql += " ORDER BY symbol, date DESC"
+            
+            daily_rows = [dict(row) for row in conn.execute(daily_sql, daily_params)]
+            
+            # Group daily rows by symbol
+            daily_rows_by_symbol = defaultdict(list)
+            for row in daily_rows:
+                daily_rows_by_symbol[row["symbol"]].append(row)
+            
+            # Filter symbols with N consecutive positive days ending at end_date
+            valid_symbols = set()
+            for symbol, symbol_rows in daily_rows_by_symbol.items():
+                if not symbol_rows:
+                    continue
+                    
+                # Find the target date (end_date or latest date)
+                target_date = end_date or symbol_rows[0]["date"]
+                
+                consecutive_positive = 0
+                
+                for row in symbol_rows:
+                    if row["date"] > target_date:
+                        continue
+                    
+                    if row["net_inflow_100m"] is not None and row["net_inflow_100m"] > 0:
+                        consecutive_positive += 1
+                    else:
+                        break
+                    
+                    if consecutive_positive >= positive_days:
+                        valid_symbols.add(symbol)
+                        break
+            
+            if valid_symbols:
+                filtered_symbols = valid_symbols
+            else:
+                # No symbols meet the criteria, return empty result
+                return {
+                    "group_by": group_by,
+                    "rows": [],
+                    "count": 0
+                }
+        finally:
+            conn.close()
 
     # Query cumulative stats
     sql = f"""
@@ -285,11 +369,16 @@ def query_stats(args) -> Dict[str, object]:
             SUM(trade_volume_100m) AS cum_trade_volume_100m
         FROM daily_metrics
     """
+    
     where_clauses = []
-    params: List[object] = []
+    params = []
 
-    if symbols:
-        where_clauses.append("symbol IN ({})".format(",".join("?" for _ in symbols)))
+    # Apply filtered symbols if we have them from the positive days check
+    if filtered_symbols:
+        where_clauses.append(f"symbol IN ({','.join(['?'] * len(filtered_symbols))})")
+        params.extend(filtered_symbols)
+    elif symbols:
+        where_clauses.append(f"symbol IN ({','.join(['?'] * len(symbols))})")
         params.extend(symbols)
 
     if industries:
