@@ -349,8 +349,15 @@
 
         // Function to get selected metric checkboxes
         function getSelectedMetrics() {
-            return Array.prototype.slice.call(metricCheckboxesContainer.querySelectorAll('input[type="checkbox"]:checked'))
+            // Always include net_inflow_100m as it's mandatory
+            var metrics = ['net_inflow_100m'];
+            
+            // Add other selected metrics
+            var otherChecked = Array.prototype.slice.call(metricCheckboxesContainer.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(function(checkbox) { return checkbox.value; });
+            
+            // Combine and remove duplicates
+            return [...new Set([...metrics, ...otherChecked])];
         }
 
         function applyIndustrySearch() {
