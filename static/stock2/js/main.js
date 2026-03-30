@@ -344,6 +344,13 @@
         var exportCsvBtn = document.getElementById("exportCsvBtn");
         var table = document.getElementById("timeseriesTable");
         var metricCheckboxesContainer = document.getElementById("metricCheckboxes");
+        // New filter elements
+        var sortOrder = document.getElementById("sortOrder");
+        var limitCount = document.getElementById("limitCount");
+        var positiveDays = document.getElementById("positiveDays");
+        var sortOrderCheck = document.getElementById("sortOrderCheck");
+        var limitCountCheck = document.getElementById("limitCountCheck");
+        var positiveDaysCheck = document.getElementById("positiveDaysCheck");
         var allIndustries = [];
         var currentChartData = null;
 
@@ -388,14 +395,47 @@
                 return;
             }
             
-            var q = buildQuery({
+            // Validate filter inputs only if their checkboxes are checked
+            var limitCountValue = limitCount.value;
+            if (limitCountCheck.checked && limitCountValue && (isNaN(limitCountValue) || Number(limitCountValue) < 1)) {
+                alert("显示数量(N)必须是大于0的整数");
+                limitCount.focus();
+                return;
+            }
+            
+            var positiveDaysValue = positiveDays.value;
+            if (positiveDaysCheck.checked && positiveDaysValue && (isNaN(positiveDaysValue) || Number(positiveDaysValue) < 1)) {
+                alert("连续净流入天数(N)必须是大于0的整数");
+                positiveDays.focus();
+                return;
+            }
+            
+            // Build query parameters with checkbox validation
+            var queryParams = {
                 symbols: symbolsInput.value.trim(),
                 industries: selectedValues(industriesSelect).join(","),
                 start_date: startDate.value,
                 end_date: endDate.value,
                 window: windowInput.value || "1",
-                metrics: metrics.join(",")
-            });
+                metrics: metrics.join(","),
+                use_cumulative: useCumulative,
+                use_relative: useRelativeValue
+            };
+            
+            // Add filter parameters only if their checkboxes are checked
+            if (sortOrderCheck.checked && sortOrder.value) {
+                queryParams.sort_order = sortOrder.value;
+            }
+            
+            if (limitCountCheck.checked && limitCountValue) {
+                queryParams.limit_count = limitCountValue;
+            }
+            
+            if (positiveDaysCheck.checked && positiveDaysValue) {
+                queryParams.positive_days = positiveDaysValue;
+            }
+            
+            var q = buildQuery(queryParams);
 
             fetch("/api2/timeseries?" + q)
                 .then(function (resp) { return resp.json(); })

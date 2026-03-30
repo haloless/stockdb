@@ -60,6 +60,17 @@ def query_timeseries(args) -> Dict[str, object]:
     start_date = args.get("start_date")
     end_date = args.get("end_date")
     window = int(args.get("window", 1) or 1)
+    
+    # New filter parameters
+    sort_order = args.get("sort_order")
+    limit_count = args.get("limit_count")
+    limit_count = int(limit_count) if limit_count and limit_count.isdigit() else None
+    positive_days = args.get("positive_days")
+    positive_days = int(positive_days) if positive_days and positive_days.isdigit() else None
+    
+    # Chart parameters to determine correct sorting metric
+    use_cumulative = args.get("use_cumulative", "false").lower() == "true"
+    use_relative = args.get("use_relative", "false").lower() == "true"
 
     metrics = parse_csv_values(args.get("metrics"))
     if not metrics:
@@ -110,12 +121,142 @@ def query_timeseries(args) -> Dict[str, object]:
 
     if window > 1 and rows:
         rows = _attach_rolling(rows, metrics, window)
+    
+    # Apply new filters if specified
+    filtered_symbols = None
+    
+    # Group rows by symbol
+    rows_by_symbol = defaultdict(list)
+    for row in rows:
+        symbol = row["symbol"]
+        rows_by_symbol[symbol].append(row)
+    
+    # 1. Filter symbols with positive net inflow for N consecutive days ending at end_date
+    if positive_days:
+        valid_symbols = set()
+        
+        # For each symbol, check if it has N consecutive positive days ending at end_date
+        for symbol, symbol_rows in rows_by_symbol.items():
+            # Sort rows by date descending
+            sorted_rows = sorted(symbol_rows, key=lambda x: x["date"], reverse=True)
+            
+            # Find the end_date row or the latest date
+            target_date = end_date or sorted_rows[0]["date"] if sorted_rows else None
+            
+            if not target_date:
+                continue
+            
+            # Collect consecutive days ending at target_date
+            consecutive_positive = 0
+            for row in sorted_rows:
+                if row["date"] > target_date:
+                    continue
+                    
+                if row["net_inflow_100m"] is not None and row["net_inflow_100m"] > 0:
+                    consecutive_positive += 1
+                else:
+                    break
+                    
+                if consecutive_positive >= positive_days:
+                    break
+            
+            if consecutive_positive >= positive_days:
+                valid_symbols.add(symbol)
+        
+        filtered_symbols = valid_symbols
+    
+    # 2. Sort symbols based on end_date data and limit count
+    if sort_order and limit_count:
+        # Create a list of symbols with their end_date net_inflow_100m
+        symbol_end_values = []
+        
+        for symbol, symbol_rows in rows_by_symbol.items():
+            # Check if symbol is already filtered out
+            if filtered_symbols and symbol not in filtered_symbols:
+                continue
+                
+            # Sort rows by date descending
+            sorted_rows = sorted(symbol_rows, key=lambda x: x["date"], reverse=True)
+            
+            # Find the end_date row or the latest date
+            target_date = end_date or sorted_rows[0]["date"] if sorted_rows else None
+            
+            if not target_date:
+                continue
+            
+            # Find the row for the target date
+            end_row = None
+            for row in sorted_rows:
+                if row["date"] == target_date:
+                    end_row = row
+                    break
+            
+            if end_row:
+                # Determine the correct metric key based on chart parameters
+                if use_cumulative:
+                    metric_key = "net_inflow_100m_cum"
+                elif window > 1:
+                    metric_key = "net_inflow_100m_roll_avg"
+                else:
+                    metric_key = "net_inflow_100m"
+                    
+                # Get the value using the determined metric key
+                metric_value = end_row.get(metric_key)
+                
+                if metric_value is not None:
+                    # Apply relative value calculation if requested
+                    if use_relative:
+                        # Use the same logic as frontend for relative value calculation
+                        free_float_market_cap = end_row.get("free_float_market_cap_100m")
+                        if free_float_market_cap is not None and free_float_market_cap > 0:
+                            # For net_inflow metrics, normalize by free float market cap
+                            metric_value = (metric_value / free_float_market_cap) * 100
+                        else:
+                            # Skip if cannot calculate relative value
+                            continue
+                    
+                    symbol_end_values.append((symbol, metric_value))
+        
+        # Sort symbols based on the selected metric and order
+        if sort_order == "asc":
+            symbol_end_values.sort(key=lambda x: x[1])
+        else:  # desc
+            symbol_end_values.sort(key=lambda x: x[1], reverse=True)
+
+        # Get top N symbols as a list to preserve order
+        top_symbols_list = [symbol for symbol, _ in symbol_end_values[:limit_count]]
+        top_symbols = set(top_symbols_list)
+        
+        # Apply AND logic with previous filters
+        if filtered_symbols:
+            # Get the intersection while preserving order
+            filtered_symbols_list = [symbol for symbol in top_symbols_list if symbol in filtered_symbols]
+            filtered_symbols = set(filtered_symbols_list)
+        else:
+            filtered_symbols = top_symbols
+            filtered_symbols_list = top_symbols_list
+    
+    # Apply filtered symbols to rows if any filters were applied
+    if filtered_symbols:
+        rows = [row for row in rows if row["symbol"] in filtered_symbols]
+        
+        # If sorting was applied, sort the rows by symbol in the sorted order
+        if sort_order and limit_count:
+            # Use the filtered_symbols_list which maintains the sorted order but only includes symbols that passed all filters
+            symbol_order_list = filtered_symbols_list
+            
+            # Create a symbol-to-index mapping for quick lookup
+            symbol_order = {symbol: index for index, symbol in enumerate(symbol_order_list)}
+            
+            # Sort rows by the symbol order, then by date
+            rows.sort(key=lambda x: (symbol_order.get(x["symbol"], float('inf')), x["date"]))
 
     return {
         "metrics": metrics,
         "window": window,
         "rows": rows,
         "count": len(rows),
+        "filtered_symbols_count": len(filtered_symbols) if filtered_symbols else len(rows_by_symbol),
     }
 
 

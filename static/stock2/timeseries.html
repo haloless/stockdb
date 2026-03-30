@@ -36,6 +36,36 @@
             <input id="windowInput" type="number" min="1" value="1">
         </div>
         <div>
+            <label>筛选选项</label>
+            <div style="margin-left: 10px;">
+                <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                    <label class="inline-check" for="sortOrderCheck" style="margin-right: 8px;">
+                        <input id="sortOrderCheck" type="checkbox" checked>
+                    </label>
+                    <label for="sortOrder">排序方式</label>
+                    <select id="sortOrder" style="margin-left: 8px;">
+                        <option value="">不排序</option>
+                        <option value="asc">从低到高</option>
+                        <option value="desc">从高到低</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                    <label class="inline-check" for="limitCountCheck" style="margin-right: 8px;">
+                        <input id="limitCountCheck" type="checkbox" checked>
+                    </label>
+                    <label for="limitCount">显示数量(N)</label>
+                    <input id="limitCount" type="number" min="1" value="30" style="margin-left: 8px; width: 60px;">
+                </div>
+                <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                    <label class="inline-check" for="positiveDaysCheck" style="margin-right: 8px;">
+                        <input id="positiveDaysCheck" type="checkbox" checked>
+                    </label>
+                    <label for="positiveDays">连续净流入天数(N)</label>
+                    <input id="positiveDays" type="number" min="1" value="3" style="margin-left: 8px; width: 60px;">
+                </div>
+            </div>
+        </div>
+        <div>
             <label>主展示指标</label>
             <div id="metricCheckboxes" style="margin-left: 20px;">
                 <label class="inline-check" for="metric_net_inflow" style="display: block; margin-bottom: 5px;">
