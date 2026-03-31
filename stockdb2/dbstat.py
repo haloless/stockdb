@@ -261,27 +261,25 @@ def query_timeseries(args) -> Dict[str, object]:
 
 
 def query_stats(args) -> Dict[str, object]:
-    """Query aggregated cumulative stats by stock or industry with relative values."""
+    """Query aggregated cumulative stats by stock with relative values."""
     symbols = parse_csv_values(args.get("symbols"))
     industries = parse_csv_values(args.get("industries"))
     start_date = args.get("start_date")
     end_date = args.get("end_date")
-    group_by = args.get("group_by", "stock")
     
     # Handle positive days filter parameter
     positive_days = args.get("positive_days")
     positive_days = int(positive_days) if positive_days and positive_days.isdigit() else None
 
-    if group_by not in ("stock", "industry"):
-        group_by = "stock"
-
-    dimension = "industry" if group_by == "industry" else "symbol"
-    dimension_name = "industry" if group_by == "industry" else "name"
+    # Always group by stock as per requirement
+    group_by = "stock"
+    dimension = "symbol"
+    dimension_name = "name"
     
     # Handle positive days filter if specified
     filtered_symbols = None
     
-    if positive_days and group_by == "stock":
+    if positive_days:
         # First, get all symbols that have N consecutive positive days ending at end_date
         conn = get_connection()
         try:

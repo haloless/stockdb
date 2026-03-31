@@ -292,7 +292,6 @@
         var industriesSelect = document.getElementById("industriesSelect");
         var startDate = document.getElementById("startDate");
         var endDate = document.getElementById("endDate");
-        var groupBy = document.getElementById("groupBy");
         var positiveDays = document.getElementById("positiveDays");
         var statsBtn = document.getElementById("statsBtn");
         var table = document.getElementById("statsTable");
@@ -319,7 +318,8 @@
                 industries: selectedValues(industriesSelect).join(","),
                 start_date: startDate.value,
                 end_date: endDate.value,
-                group_by: groupBy.value
+                // Always group by stock, so no need for user selection
+                group_by: "stock"
             };
             
             // Add positive days filter if value is provided
