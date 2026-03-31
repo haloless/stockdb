@@ -362,9 +362,7 @@ def query_stats(args) -> Dict[str, object]:
             {dimension} AS group_key,
             {dimension_name} AS group_name,
             COUNT(*) AS days,
-            SUM(net_inflow_100m) AS cum_net_inflow_100m,
-            SUM(turnover_amount_100m) AS cum_turnover_amount_100m,
-            SUM(trade_volume_100m) AS cum_trade_volume_100m
+            SUM(net_inflow_100m) AS cum_net_inflow_100m
         FROM daily_metrics
     """
     
@@ -429,8 +427,8 @@ def query_stats(args) -> Dict[str, object]:
                 SELECT DISTINCT
                     {dimension} AS group_key,
                     date,
-                    free_float_market_cap_100m,
-                    free_float_shares_100m
+                    price,
+                    free_float_market_cap_100m
                 FROM daily_metrics
                 WHERE {where_clause}
                 ORDER BY {dimension}, date DESC
@@ -447,38 +445,28 @@ def query_stats(args) -> Dict[str, object]:
                     last_date_data[row_dict["group_key"]] = row_dict
                     current_group = row_dict["group_key"]
             
-            # Calculate relative values for each row
+            # Calculate relative values and add end date values for each row
             for row in rows:
                 group_key = row["group_key"]
                 last_data = last_date_data.get(group_key, {})
                 
                 # Get last date's values
                 last_market_cap = last_data.get("free_float_market_cap_100m")
-                last_shares = last_data.get("free_float_shares_100m")
+                current_price = last_data.get("price")
                 
                 # Get cumulative values
                 cum_net_inflow = row.get("cum_net_inflow_100m")
-                cum_turnover = row.get("cum_turnover_amount_100m")
-                cum_volume = row.get("cum_trade_volume_100m")
                 
-                # Calculate relative values with proper None and zero checks
+                # Add end date values to the row
+                row["current_price"] = current_price
+                row["free_float_market_cap_100m"] = last_market_cap
+                
+                # Calculate relative value for cumulative net inflow with proper None and zero checks
                 if (last_market_cap is not None and last_market_cap > 0 and 
                     cum_net_inflow is not None):
                     row["cum_net_inflow_rel"] = cum_net_inflow / last_market_cap * 100
                 else:
                     row["cum_net_inflow_rel"] = None
-                
-                if (last_market_cap is not None and last_market_cap > 0 and 
-                    cum_turnover is not None):
-                    row["cum_turnover_rel"] = cum_turnover / last_market_cap * 100
-                else:
-                    row["cum_turnover_rel"] = None
-                
-                if (last_shares is not None and last_shares > 0 and 
-                    cum_volume is not None):
-                    row["cum_volume_rel"] = cum_volume / last_shares * 100
-                else:
-                    row["cum_volume_rel"] = None
                 
     finally:
         conn.close()

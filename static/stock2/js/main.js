@@ -50,24 +50,52 @@
         // Stats table: group_key, group_name
         // Timeseries table: symbol, name
         if (allKeys.includes("group_key")) {
-            keys.push("group_key");
-        }
-        if (allKeys.includes("group_name")) {
-            keys.push("group_name");
-        }
-        if (allKeys.includes("symbol")) {
+            // Custom column order for stats table
+            // Follow the required order: group_key, group_name, days, cum_net_inflow_100m, cum_net_inflow_rel, current_price, free_float_market_cap_100m
+            var customOrder = [
+                "group_key",
+                "group_name",
+                "days",
+                "cum_net_inflow_100m",
+                "cum_net_inflow_rel",
+                "current_price",
+                "free_float_market_cap_100m"
+            ];
+            
+            // Add keys in custom order if they exist
+            customOrder.forEach(function(key) {
+                if (allKeys.includes(key)) {
+                    keys.push(key);
+                }
+            });
+        } else if (allKeys.includes("symbol")) {
             keys.push("symbol");
-        }
-        if (allKeys.includes("name")) {
-            keys.push("name");
-        }
-        
-        // Add remaining keys
-        allKeys.forEach(function(key) {
-            if (!keys.includes(key)) {
-                keys.push(key);
+            if (allKeys.includes("name")) {
+                keys.push("name");
             }
-        });
+            
+            // Add remaining keys for timeseries table
+            allKeys.forEach(function(key) {
+                if (!keys.includes(key)) {
+                    keys.push(key);
+                }
+            });
+        } else {
+            // Default behavior for other tables
+            if (allKeys.includes("group_name")) {
+                keys.push("group_name");
+            }
+            if (allKeys.includes("name")) {
+                keys.push("name");
+            }
+            
+            // Add remaining keys
+            allKeys.forEach(function(key) {
+                if (!keys.includes(key)) {
+                    keys.push(key);
+                }
+            });
+        }
         
         var mapHeader = headerMapper || function (key) { return key; };
         thead.innerHTML = "<tr>" + keys.map(function (key) {
@@ -138,15 +166,13 @@
 
     function getStatsHeaderLabel(key) {
         var labels = {
-            group_key: "分组键",
+            group_key: "股票代码",
             group_name: "名称",
             days: "统计天数",
             cum_net_inflow_100m: "累计净流入(亿元)",
             cum_net_inflow_rel: "累计净流入相对值%",
-            cum_turnover_amount_100m: "累计成交额(亿元)",
-            cum_turnover_rel: "累计成交额相对值%",
-            cum_trade_volume_100m: "累计成交量(亿股)",
-            cum_volume_rel: "累计成交量相对值%"
+            current_price: "现价",
+            free_float_market_cap_100m: "流通市值(亿元)"
         };
 
         return labels[key] || key;
